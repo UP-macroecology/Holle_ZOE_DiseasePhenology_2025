@@ -3,6 +3,8 @@
 ### RESEARCH AIM: 
 The analysis is part of the EU-funded project [ZOE (Zoonoses Emergence across Degraded and Restored Forest Ecosystems)](https://www.zoe-project.eu), which investigates the relationship between ecosystem degradation, biodiversity loss, and the associated risk of zoonotic disease emergence. As contributors to Work Package 5 of the project, our goal is to analyse how distinct seasonal emergence patterns of arthropod species can significantly impact disease transmission risks in Europe. Using a spatiotemporal modelling framework, we aim to understand how climate warming and land use changes, as well as interannual variation, can alter disease occurrence in space and time, the timing of peak infection risk and the duration of transmission season by affecting vector and virus distribution. Understanding these trends is crucial for effectively managing disease risks and implementing appropriate public health measures. 
 
+This repository contains the R scripts needed to reproduce all results and plots.
+
 ## Workflow
 ### 00 - Data setup
 We list the needed functions.
