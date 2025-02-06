@@ -80,9 +80,9 @@ for (d in date_sequence) { # Start of the loop over all dates
     
     
     
-    #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
     
-    # 2. Generation of background data ---------------------------------------------
+# 2. Generation of background data ---------------------------------------------
     
     # Convert presence points into vectors
     presences <- vect(occ_coords, crs = "+proj=longlat +datum=WGS84")
@@ -99,26 +99,27 @@ for (d in date_sequence) { # Start of the loop over all dates
     
     if (nrow(occ_coords) > 0) { # Just continue if at least one presence of the respective month and year are within the continent of Europe
       
-      # Place a buffer of 50 km around presence locations
-      buf_50 <- buffer(presences, width = 50000)
+      # Place a buffer of 100 km around presence locations
+      buf_100 <- buffer(presences_europe, width = 100000)
       
-      # use mask_buf to rasterize buf_20 (which has been a vector so far; !raster required for later steps)
-      buf_50 <- rasterize(buf_50, europe_mask, touches = TRUE)
+      # use mask_buf to rasterize buf_100 (which has been a vector so far; !raster required for later steps)
+      buf_100 <- rasterize(buf_100, europe_mask)
       
       # set raster cells outside the buffer to NA
-      buf_50 <- terra::mask(europe_mask, buf_50, overwrite = TRUE)
+      buf_100 <- terra::mask(europe_mask, buf_100, overwrite = TRUE)
       
       # randomly select background data within the buffer, excluding presence locations (sampling 10x as many background points as presences)
-      occ_cells_50 <- terra::extract(buf_50, occ_coords, cells = TRUE)[,"cell"]
-      buf_cells_50 <- terra::extract(buf_50, crds(buf_50), cells = TRUE)[,"cell"]
-      diff_cells_50 <- setdiff(buf_cells_50, occ_cells_50)
+      occ_cells_100 <- terra::extract(buf_100, occ_coords, cells = TRUE)[,"cell"]
+      buf_cells_100 <- terra::extract(buf_100, crds(buf_100), cells = TRUE)[,"cell"]
+      diff_cells_100 <- setdiff(buf_cells_100, occ_cells_100)
       
-      abs_indices_50 <- base::sample(diff_cells_50, ifelse(length(diff_cells_50) < nrow(occ_coords)*10, length(diff_cells_50), nrow(occ_coords)*10))
-      abs_coords_50 <- as.data.frame(xyFromCell(buf_50, abs_indices_50))
-      colnames(abs_coords_50) = c("lon", "lat")
+      abs_indices_100 <- base::sample(diff_cells_100, ifelse(length(diff_cells_100) < nrow(occ_coords)*10, length(diff_cells_100), nrow(occ_coords)*10))
+      abs_coords_100 <- as.data.frame(xyFromCell(buf_100, abs_indices_100))
+      colnames(abs_coords_100) = c("lon", "lat")
       
-      # Add information on presence
+      # Add information on presence and background
       occ_coords$occ <- 1
+      abs_coords_100$occ <- 0
       
       
       
@@ -133,71 +134,65 @@ for (d in date_sequence) { # Start of the loop over all dates
       # Transform data frame into sf object to use in thin function
       occ_coords_sf <- st_as_sf(occ_coords, coords = c("lon", "lat"), crs = "+proj=longlat +datum=WGS84")
       
-      # Using the thin function with a thinning distance of 100 km (2 cells)
-      occ_coords_thinned <- thin(occ_coords_sf, thin_dist = 100000, runs = 1, ncores = 1)
+      # Using the thin function with a thinning distance of 50 km (checkerboard pattern)
+      occ_coords_thinned <- thin(occ_coords_sf, thin_dist = 50000, runs = 1, ncores = 1)
       
       # Merge data frames to only retained thinned presences and background
       occ_coords_thinned <- merge(occ_coords_thinned, occ_coords, by = c("lon", "lat"))
       
       
-      if (nrow(abs_coords_50) > 0) { # Just continue if absences in the 50km buffer were created
-        
-        # Add information to background data
-        abs_coords_50$occ <- 0
-        
-        # Thinning of background data
-        # Transform data frame into sf object to use in thin function
-        abs_coords_sf <- st_as_sf(abs_coords_50, coords = c("lon", "lat"), crs = "+proj=longlat +datum=WGS84")
-        
-        # Using the thin function with a thinning distance of 100 km (2 cells)
-        abs_coords_thinned <- thin(abs_coords_sf, thin_dist = 100000, runs = 1, ncores = 1)
-        
-        # Merge data frames to only retained thinned presences and background
-        abs_coords_thinned <- merge(abs_coords_thinned, abs_coords_50, by = c("lon", "lat"))
-        
-        
-        # Join presence and background data
-        C_pipiens_occ_thinned <- rbind(occ_coords_thinned, abs_coords_thinned)
-        
-        # Add the year and month as information in columns
-        C_pipiens_occ_thinned$year <- y
-        C_pipiens_occ_thinned$month <- m
-        
-        
-        
-        #-------------------------------------------------------------------------------
-        
-        # 4. Join with environmental data  ---------------------------------------------
-        
-        print("matching env. data")
-        
-        # Load the environmental data for the specific year and month
-        Climate_data <- terra::rast(paste0(datapath_env, "/Climate/processed_data/Climate_data_",m,"_",y,".tif")) # Climate data
-        LandUse_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_",y,".tif")) # Land cover data
-        
-        # Stack the environmental data
-        env_data <- c(Climate_data, LandUse_data)
-        
-        # Extract the environmental values per occurrence cell
-        C_pipiens_occ_env_date <- cbind(C_pipiens_occ_thinned, terra::extract(x = env_data, y = C_pipiens_occ_thinned[,c('lon','lat')]))
-        
-        # Drop NA for the environmental variables 
-        C_pipiens_occ_env_date <- C_pipiens_occ_env_date %>% drop_na()
-        
-        # Check for duplicates
-        duplicated(C_pipiens_occ_env_date$ID)
-        
-        # Only retain non-duplicated cells
-        C_pipiens_occ_env_date <- C_pipiens_occ_env_date[!duplicated(C_pipiens_occ_env_date$ID),]
-        
-        
-        
-        # Add the thinned presences and background data belonging to the specific year and month to the 
-        # prepared results data frame
-        C_pipiens_occ_env <- rbind(C_pipiens_occ_env, C_pipiens_occ_env_date)
-        
-      } else if (nrow(abs_coords_50) == 0) { print("no background data created for respective month-year combination")
-      }
+      
+      # Thinning of background data
+      # Transform data frame into sf object to use in thin function
+      abs_coords_sf <- st_as_sf(abs_coords_100, coords = c("lon", "lat"), crs = "+proj=longlat +datum=WGS84")
+      
+      # Using the thin function with a thinning distance of 50 km (checkerboard pattern)
+      abs_coords_thinned <- thin(abs_coords_sf, thin_dist = 50000, runs = 1, ncores = 1)
+      
+      # Merge data frames to only retained thinned presences and background
+      abs_coords_thinned <- merge(abs_coords_thinned, abs_coords_100, by = c("lon", "lat"))
+      
+      
+      
+      # Join presence and background data
+      C_pipiens_occ_thinned <- rbind(occ_coords_thinned, abs_coords_thinned)
+      
+      # Add the year and month as information in columns
+      C_pipiens_occ_thinned$year <- y
+      C_pipiens_occ_thinned$month <- m
+      
+      
+      
+      #-------------------------------------------------------------------------------
+      
+      # 4. Join with environmental data  ---------------------------------------------
+      
+      print("matching env. data")
+      
+      # Load the environmental data for the specific year and month
+      Climate_data <- terra::rast(paste0(datapath_env, "/Climate/processed_data/Climate_data_",m,"_",y,".tif")) # Climate data
+      LandUse_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_",y,".tif")) # Land cover data
+      
+      # Stack the environmental data
+      env_data <- c(Climate_data, LandUse_data)
+      
+      # Extract the environmental values per occurrence cell
+      C_pipiens_occ_env_date <- cbind(C_pipiens_occ_thinned, terra::extract(x = env_data, y = C_pipiens_occ_thinned[,c('lon','lat')]))
+      
+      # Drop NA for the environmental variables 
+      C_pipiens_occ_env_date <- C_pipiens_occ_env_date %>% drop_na()
+      
+      # Check for duplicates
+      duplicated(C_pipiens_occ_env_date$ID)
+      
+      # Only retain non-duplicated cells
+      C_pipiens_occ_env_date <- C_pipiens_occ_env_date[!duplicated(C_pipiens_occ_env_date$ID),]
+      
+      
+      
+      # Add the thinned presences and background data belonging to the specific year and month to the 
+      # prepared results data frame
+      C_pipiens_occ_env <- rbind(C_pipiens_occ_env, C_pipiens_occ_env_date)
       
       
     } else if (nrow(occ_coords) == 0) { print("no data available for European continent")
@@ -211,7 +206,7 @@ for (d in date_sequence) { # Start of the loop over all dates
 
 
 # Get a summary of presence and background data numbers
-print(table(C_pipiens_occ_env$occ))
+print(table(C_pipiens_occ_env$occ)) # 1: 1047; 2: 5853
 print(table(C_pipiens_occ_env$month[C_pipiens_occ_env$occ == 1]))
 
 # Save the resulting data frame, containing thinned presence and background data,

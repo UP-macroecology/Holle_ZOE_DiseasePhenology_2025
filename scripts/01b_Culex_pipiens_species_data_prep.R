@@ -9,9 +9,7 @@
 
 
 # Load needed packages
-library(rgbif)
 library(CoordinateCleaner)
-library(dplyr)
 library(tibble)
 library(maps)
 library(lubridate)
@@ -19,36 +17,35 @@ library(tidyverse)
 
 
 # Load needed objects
-# Load downloaded occurrences that were available from VectorMap
+# Load downloaded occurrences that were available from VectorMap and GBIF
 C_pipiens_vectormap <- read.csv("input_data/raw_species_data/Culex_pipiens_occurrences_VectorMap_200924.csv") 
+C_pipiens_gbif <- read.delim("input_data/raw_species_data/Culex_pipiens_occurrences_GBIF_280125.csv") 
 
 
 #-------------------------------------------------------------------------------
 
 # 1. Download GBIF data --------------------------------------------------------
 
+# GBIF data was downloaded with the following filters: Geometry: POLYGON((-31 34,40 34,40 72,-31 72,-31 34)),
+# Has Coordinate: TRUE, Scientific name: Culex pipiens, Year: between start of 1970 and end of 2019
+# GBIF.org (28 January 2025) GBIF Occurrence Download https://doi.org/10.15468/dl.2q36w8
+# DOI: 10.15468/dl.2q36w8
+# 7257 occurrences included in download
 
+# {
+#"and" : [
+#  "Geometry POLYGON((-31 34,40 34,40 72,-31 72,-31 34))",
+#  "HasCoordinate is true",
+#  "HasGeospatialIssue is false",
+#  "TaxonKey is Culex pipiens Linnaeus, 1758",
+#  "Year 1970-2019"
+#]
+#}
 
-# Check for synonyms
-name_suggest(q = "Culex pipiens", rank = "species")
-
-# Check how many records with coordinate information are available for the extent of Europe
-# within more recent years
-occ_count(scientificName = "Culex pipiens", hasCoordinate = TRUE,
-          decimalLongitude = "-31,40", decimalLatitude = "34,72",
-          year = "1970,2019")
-
-# Download these occurrences
-C_pipiens_gbif_list <- occ_search(scientificName = "Culex pipiens", hasCoordinate = TRUE,
-                                  decimalLongitude = "-31,40", decimalLatitude = "34,72",
-                                  year = "1970,2019", limit = 10000)
-
-# Extract data frame containing occurrence records
-C_pipiens_gbif <- C_pipiens_gbif_list$data
 
 # Subset data frame to only contain relevant columns
 C_pipiens_gbif <- C_pipiens_gbif[, c("species", "decimalLatitude","decimalLongitude",
-                                     "country", "year", "month", "institutionCode", 
+                                     "countryCode", "year", "month", "institutionCode", 
                                      "coordinateUncertaintyInMeters")]
 
 # Change the column names
@@ -62,6 +59,16 @@ C_pipiens_gbif$database <- "GBIF"
 
 # 2. Downloaded VectorMap data -------------------------------------------------
 
+# Only keep occurrences where the columns "EarliestDateCollected" and
+# "LatestDateCollected" coincide in their year and month
+C_pipiens_vectormap <- C_pipiens_vectormap %>% 
+  mutate(EarliestDateCollected = ymd_hm(EarliestDateCollected),
+         LatestDateCollected = ymd_hm(LatestDateCollected),
+         EarliestYearMonth = format(EarliestDateCollected, "%Y-%m"),
+         LatestYearMonth = format(LatestDateCollected, "%Y-%m")
+  ) %>%
+  filter(EarliestYearMonth == LatestYearMonth) %>%
+  select(-EarliestYearMonth, -LatestYearMonth)
 
 # Subset the data frame to only contain relevant columns
 C_pipiens_vectormap <- C_pipiens_vectormap[, c("ScientificName", "DecimalLatitude", "DecimalLongitude",
@@ -77,7 +84,7 @@ colnames(C_pipiens_vectormap) <- c("species", "lat", "lon", "country", "year", "
 
 # Only retain occurrences on the European continent
 C_pipiens_vectormap <- C_pipiens_vectormap[C_pipiens_vectormap$lon >= -31 & C_pipiens_vectormap$lon <= 40 & 
-                                             C_pipiens_vectormap$lat >= 34 & C_pipiens_vectormap$lat <= 72, ]
+                                            C_pipiens_vectormap$lat >= 34 & C_pipiens_vectormap$lat <= 72, ]
 
 
 # Add a column name that indicates the used database

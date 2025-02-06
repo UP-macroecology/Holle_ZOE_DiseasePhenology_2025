@@ -1,8 +1,8 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBEV)
+# Disease phenology analysis of Culex pipiens in Europe (primary transmitter of WNV)
 
 # ---------------------------------------------------------------------- #
-#       08a. Past and future decadal trends of disease phenology         #
+#       08b. Past and future decadal trends of disease phenology         #
 # ---------------------------------------------------------------------- #
 
 
@@ -13,15 +13,14 @@ library(terra)
 library(tidyverse)
 
 
-
 #-------------------------------------------------------------------------------
 
 # 1. Past disease phenology ----------------------------------------------------
 # Calculate the past decadal trends of peak and mean occurrence probability per month
 
 # Read in past monthly prediction data from 1970 to 2019 
-r_curr_preds_clim_landuse <- terra::rast("output_data/results/I_ricinus_preds_clim_landuse_ens_1970_2019.tif") # under observed climate and land use change
-r_curr_preds_noclim_landuse <- terra::rast("output_data/results/I_ricinus_preds_noclim_landuse_ens_1970_2019.tif") # under observed land use change and counterfactual climate 
+r_curr_preds_clim_landuse <- terra::rast("output_data/results/C_pipiens_preds_clim_landuse_ens_1970_2019.tif") # under observed climate and land use change
+r_curr_preds_noclim_landuse <- terra::rast("output_data/results/C_pipiens_preds_noclim_landuse_ens_1970_2019.tif") # under observed land use change and counterfactual climate 
 
 # Create a vector indicating the mathematical operations to extract peak and mean 
 # occurrence probabilities
@@ -87,8 +86,8 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
     mutate(month = factor(month, levels = 1:12, labels = month.abb))
   
   # Adapt ylim for the plot based on used function
-  if (o == "95th percentile") { y_lim_values <- c(0.48, 0.65)
-  } else if (o == "mean") {y_lim_values <- c(0.30, 0.45)}
+  if (o == "95th percentile") { y_lim_values <- c(0.51, 0.65)
+  } else if (o == "mean") {y_lim_values <- c(0.355, 0.485)}
   
   # Visualize the data
   ggplot(aggregated_df, aes(x = month, y = occurrence, group = interaction(decade, scenario), color = decade)) +
@@ -96,7 +95,7 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
     labs(
       x = "month in a year",
       y = paste(o, "occurrence probability"),
-      title = paste("Ixodes ricinus - Decadal trends in monthly", o, "occurrence probability in Europe"),
+      title = paste("Culex pipiens - Decadal trends in monthly", o, "occurrence probability in Europe"),
       color = "Decade",
       linetype = "Scenario"
     ) +
@@ -129,7 +128,7 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
       plot.title = element_text(size = 15, face = "bold"))
   
   
-  ggsave(paste0("output_data/plots/decadal_trends/I_ricinus_decadal_trends_",o,"_occprob_past.png"), width = 9, height = 7.5)
+  ggsave(paste0("output_data/plots/decadal_trends/C_pipiens_decadal_trends_",o,"_occprob_past.png"), width = 9, height = 7.5)
   
 } # Close the loop over the 95th percentile and mean functions
 
@@ -156,10 +155,10 @@ operations <- c("95th percentile", "mean")
 for (s in env_scenarios) { # Start of the loop over respective environmental change scenario
   
   print(s)
-
+  
   # Read in future monthly prediction data from 2030 to 2070
-  r_fut_preds_clim_landuse <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_landuse_ens_2030_2070_",s,".tif")) # under scenario of future climate and land use change
-  r_fut_preds_clim_nolanduse <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_nolanduse_ens_2030_2070_",s,".tif")) # under scenario of future climate change and steady land use
+  r_fut_preds_clim_landuse <- terra::rast(paste0("output_data/results/C_pipiens_preds_clim_landuse_ens_2030_2070_",s,".tif")) # under scenario of future climate and land use change
+  r_fut_preds_clim_nolanduse <- terra::rast(paste0("output_data/results/C_pipiens_preds_clim_nolanduse_ens_2030_2070_",s,".tif")) # under scenario of future climate change and steady land use
   
   
   # Generate time information
@@ -191,7 +190,7 @@ for (s in env_scenarios) { # Start of the loop over respective environmental cha
     # Combine the data frames
     combined_df <- bind_rows(monthly_clim_landuse, monthly_clim_nolanduse)
     
-  
+    
     # Create columns for month (1:12) and decade (2030s, 2040s, etc.) to group data
     combined_df <- combined_df %>%
       mutate(
@@ -220,8 +219,8 @@ for (s in env_scenarios) { # Start of the loop over respective environmental cha
       mutate(month = factor(month, levels = 1:12, labels = month.abb))
     
     # Adapt ylim for the plot based on used function
-    if (o == "95th percentile") { y_lim_values <- c(0.48, 0.65)
-    } else if (o == "mean") {y_lim_values <- c(0.30, 0.45)}
+    if (o == "95th percentile") { y_lim_values <- c(0.51, 0.65)
+    } else if (o == "mean") {y_lim_values <- c(0.355, 0.485)}
     
     # Visualize the data for respective scenario
     ggplot(aggregated_df, aes(x = month, y = occurrence, group = interaction(decade, scenario), color = decade)) +
@@ -253,9 +252,8 @@ for (s in env_scenarios) { # Start of the loop over respective environmental cha
             legend.text = element_text(size = 12),  
             plot.title = element_text(size = 13))
     
-    ggsave(paste0("output_data/plots/decadal_trends/I_ricinus_decadal_trends_",o,"_occprob_future_",s,".png"), width = 10, height = 6)
+    ggsave(paste0("output_data/plots/decadal_trends/C_pipiens_decadal_trends_",o,"_occprob_future_",s,".png"), width = 10, height = 6)
     
   } # Close the loop over the 95th percentile and mean functions
   
 } # Close the loop over the three environmental change scenarios
-    

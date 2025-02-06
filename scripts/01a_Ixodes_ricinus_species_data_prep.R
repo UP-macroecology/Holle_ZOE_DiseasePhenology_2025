@@ -9,44 +9,42 @@
 
 
 # Load needed packages
-library(rgbif)
 library(CoordinateCleaner)
-library(dplyr)
+library(tidyverse)
 library(tibble)
 library(maps)
 library(lubridate)
 
 
 # Load needed objects
-# Load downloaded occurrences that were available from VectorMap
+# Load downloaded occurrences that were available from VectorMap and GBIF
 I_ricinus_vectormap <- read.csv("input_data/raw_species_data/Ixodes_ricinus_occurrences_VectorMap_020824.csv") 
+I_ricinus_gbif <- read.delim("input_data/raw_species_data/Ixodes_ricinus_occurrences_GBIF_280125.csv") 
 
 
 #-------------------------------------------------------------------------------
 
-# 1. Download GBIF data --------------------------------------------------------
+# 1. Downloaded GBIF data --------------------------------------------------------
 
-# Check for synonyms
-name_suggest(q = "Ixodes ricinus", rank = "species")
+# GBIF data was downloaded with the following filters: Geometry: POLYGON((-31 34,40 34,40 72,-31 72,-31 34)),
+# Has Coordinate: TRUE, Scientific name: Ixodes ricinus, Year: between start of 1970 and end of 2019
+# GBIF.org (28 January 2025) GBIF Occurrence Download https://doi.org/10.15468/dl.c2krqj
+# DOI: 10.15468/dl.c2krqj
+# 4483 occurrences included in download
 
-# Check how many records with coordinate information are available for the extent of Europe
-# within more recent years
-occ_count(scientificName = "Ixodes ricinus", hasCoordinate = TRUE,
-          decimalLongitude = "-31,40", decimalLatitude = "34,72",
-          year = "1970,2019") # 4447
-
-# Download these occurrences
-I_ricinus_gbif_list <- occ_search(scientificName = "Ixodes ricinus", hasCoordinate = TRUE,
-                                  decimalLongitude = "-31,40", decimalLatitude = "34,72",
-                                  year = "1970,2019", limit = 10000)
-
-# Extract data frame containing occurrence records
-I_ricinus_gbif <- I_ricinus_gbif_list$data
-
+# {
+#"and" : [
+#  "Geometry POLYGON((-31 34,40 34,40 72,-31 72,-31 34))",
+#  "HasCoordinate is true",
+#  "HasGeospatialIssue is false",
+#  "TaxonKey is Ixodes ricinus Linnaeus, 1758",
+#  "Year 1970-2019"
+#]
+#}
 
 # Subset data frame to only contain relevant columns
 I_ricinus_gbif <- I_ricinus_gbif[, c("species", "decimalLatitude","decimalLongitude",
-                                     "country", "year", "month", "institutionCode", 
+                                     "countryCode", "year", "month", "institutionCode", 
                                      "coordinateUncertaintyInMeters")]
 
 # Change the column names
@@ -60,6 +58,17 @@ I_ricinus_gbif$database <- "GBIF"
 #-------------------------------------------------------------------------------
 
 # 2. Downloaded VectorMap data -------------------------------------------------
+
+# Only keep occurrences where the columns "EarliestDateCollected" and
+# "LatestDateCollected" coincide in their year and month
+I_ricinus_vectormap <- I_ricinus_vectormap %>% 
+  mutate(EarliestDateCollected = ymd_hm(EarliestDateCollected),
+         LatestDateCollected = ymd_hm(LatestDateCollected),
+         EarliestYearMonth = format(EarliestDateCollected, "%Y-%m"),
+         LatestYearMonth = format(LatestDateCollected, "%Y-%m")
+  ) %>%
+  filter(EarliestYearMonth == LatestYearMonth) %>%
+  select(-EarliestYearMonth, -LatestYearMonth)
 
 # Subset the data frame to only contain relevant columns
 I_ricinus_vectormap <- I_ricinus_vectormap[, c("ScientificName", "DecimalLatitude", "DecimalLongitude",

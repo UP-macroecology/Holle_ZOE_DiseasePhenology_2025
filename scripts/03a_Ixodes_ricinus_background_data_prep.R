@@ -99,7 +99,7 @@ for (d in date_sequence) { # Start of the loop over all dates
     if (nrow(occ_coords) > 0) { # Just continue if at least one presence of the respective month and year are within the continent of Europe
       
       # Place a buffer of 150 km around presence locations
-      buf_150 <- buffer(presences, width = 150000)
+      buf_150 <- buffer(presences_europe, width = 150000)
       
       # use mask_buf to rasterize buf_150 (which has been a vector so far; !raster required for later steps)
       buf_150 <- rasterize(buf_150, europe_mask)
@@ -132,8 +132,8 @@ for (d in date_sequence) { # Start of the loop over all dates
       # Transform data frame into sf object to use in thin function
       occ_coords_sf <- st_as_sf(occ_coords, coords = c("lon", "lat"), crs = "+proj=longlat +datum=WGS84")
       
-      # Using the thin function with a thinning distance of 100 km (2 cells)
-      occ_coords_thinned <- thin(occ_coords_sf, thin_dist = 100000, runs = 1, ncores = 1)
+      # Using the thin function with a thinning distance of 50 km (checkerboard pattern)
+      occ_coords_thinned <- thin(occ_coords_sf, thin_dist = 50000, runs = 1, ncores = 1)
       
       # Merge data frames to only retained thinned presences and background
       occ_coords_thinned <- merge(occ_coords_thinned, occ_coords, by = c("lon", "lat"))
@@ -143,8 +143,8 @@ for (d in date_sequence) { # Start of the loop over all dates
       # Transform data frame into sf object to use in thin function
       abs_coords_sf <- st_as_sf(abs_coords_150, coords = c("lon", "lat"), crs = "+proj=longlat +datum=WGS84")
       
-      # Using the thin function with a thinning distance of 100 km (2 cells)
-      abs_coords_thinned <- thin(abs_coords_sf, thin_dist = 100000, runs = 1, ncores = 1)
+      # Using the thin function with a thinning distance of 50 km (checkerboard pattern)
+      abs_coords_thinned <- thin(abs_coords_sf, thin_dist = 50000, runs = 1, ncores = 1)
       
       # Merge data frames to only retained thinned presences and background
       abs_coords_thinned <- merge(abs_coords_thinned, abs_coords_150, by = c("lon", "lat"))
@@ -191,17 +191,17 @@ for (d in date_sequence) { # Start of the loop over all dates
       I_ricinus_occ_env <- rbind(I_ricinus_occ_env, I_ricinus_occ_env_date)
       
       
-    } else if (nrow(occ_coords) == 0) { print("no data available")
+    } else if (nrow(occ_coords) == 0) { print("no data available for European continent")
     } # End of if-condition
     
     
-  } else if (nrow(subset_year_month) == 0) { print("no data available")
+  } else if (nrow(subset_year_month) == 0) { print("no data available for month-year combination")
   } # End of if-condition
   
 } # End of loop over dates
 
 # Get a summary of presence and background data numbers
-table(I_ricinus_occ_env$occ) # 0: 6687; 1: 1745
+table(I_ricinus_occ_env$occ) # 0: 15650; 1: 2114
 print(table(I_ricinus_occ_env$month[I_ricinus_occ_env$occ == 1]))
 
 # Save the resulting data frame, containing thinned presence and background data,

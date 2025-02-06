@@ -1,0 +1,163 @@
+# ZOE project 
+# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBEV)
+
+# ---------------------------------------------------------------------- #
+#       10a. Past and future duration trends of disease phenology        #
+# ---------------------------------------------------------------------- #
+
+
+# Load the needed packages
+library(terra)
+library(tidyverse)
+library(ggplot2)
+library(sf)
+
+
+#-------------------------------------------------------------------------------
+
+# 1. Past duration trends based on disease phenology ---------------------------
+
+# Read in the monthly binary prediction data from 1970 to 2019
+r_curr_preds_clim_landuse_ens_bin <- terra::rast("output_data/results/I_ricinus_preds_clim_landuse_ens_bin_1970_2019.tif")
+
+# Extract the years from the layer names
+r_names_curr <- names(r_curr_preds_clim_landuse_ens_bin)
+r_years_curr <- as.numeric(substr(r_names_curr, 4, 7))
+
+# Calculate the number of months with a predicted presence per year (for each cell)
+length_presence_year_curr <- terra::tapp(r_curr_preds_clim_landuse_ens_bin, index = r_years_curr, fun = sum, na.rm = TRUE)
+
+# Rename yearly layers
+names(length_presence_year_curr) <- paste0(unique(r_years_curr))
+
+# Create a vector with the studied decades
+r_names_curr <- names(length_presence_year_curr)
+r_decades_curr <- floor(as.numeric(r_names_curr) / 10) * 10
+
+# Compute the mean presence length per decade (per cell)
+decadal_means_curr <- tapp(length_presence_year_curr, index = r_decades_curr, fun = mean, na.rm = TRUE)
+
+# Rename decadal layers
+names(decadal_means_curr) <- paste0(unique(r_decades_curr))
+
+# Function to compute slope (trend) from 1970s to 2010s for each cell
+calc_slope_curr <- function(x) {
+  if (all(is.na(x))) return(NA)  # Handle NA pixels
+  decade_values <- seq(1970, 2010, by = 10)  # Decade midpoint years
+  lm_fit <- lm(x ~ decade_values)  # Fit linear model
+  return(coef(lm_fit)[2])  # Extract slope coefficient
+}
+
+# Apply function to raster to calculate trend (slope)
+slope_raster_curr <- app(decadal_means_curr, fun = calc_slope_curr)
+names(slope_raster_curr) <- "Trend_Slope"
+
+# Convert raster to a data frame for plotting
+slope_df_curr <- as.data.frame(slope_raster_curr, xy = TRUE, na.rm = TRUE)
+colnames(slope_df_curr) <- c("lon", "lat", "trend")
+
+# Find out the highest and lowest slope
+print(max(slope_df_curr$trend))
+print(min(slope_df_curr$trend))  
+
+# Plot
+ggplot(slope_df_curr) +
+  geom_tile(aes(x = lon, y = lat, fill = trend)) +
+  scale_fill_gradient2(
+    low = "midnightblue", mid = "grey93", high = "firebrick4",
+    midpoint = 0, name = "Trend / Slope",
+    limits = c(-0.33, 0.36) 
+  ) +
+  theme_minimal() +
+  labs(title = "Ixodes ricinus - Trend in Presence Length (1970s-2010s)",
+       x = "Longitude", y = "Latitude") +
+  theme(plot.title = element_text(face = "bold"))
+
+ggsave("output_data/plots/duration_trends/I_ricinus_duration_trends_past.png", width = 8.5, height = 6)
+
+
+
+
+
+#-------------------------------------------------------------------------------
+
+# 2. Future duration trends based on disease phenology -------------------------
+
+# Create a vector containing the three different environmental change scenarios
+env_scenarios <- c("ssp126", "ssp370", "ssp585")
+
+
+
+for (s in env_scenarios) { # Start the loop over the three environmental scenarios
+  
+  print(s)
+  
+  
+  # Read in the monthly binary prediction data from 1970 to 2019
+  r_fut_preds_clim_landuse_ens_bin <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_landuse_ens_bin_2030_2070_",s,".tif"))
+  
+  # Extract the years from the layer names
+  r_names_fut <- names(r_fut_preds_clim_landuse_ens_bin)
+  r_years_fut <- as.numeric(substr(r_names_fut, 4, 7))
+  
+  # Calculate the number of months with a predicted presence per year (for each cell)
+  length_presence_year_fut <- terra::tapp(r_fut_preds_clim_landuse_ens_bin, index = r_years_fut, fun = sum, na.rm = TRUE)
+  
+  # Rename yearly layers
+  names(length_presence_year_fut) <- paste0(unique(r_years_fut))
+  
+  # Create a vector with the studied decades
+  r_names_fut <- names(length_presence_year_fut)
+  r_decades_fut <- floor(as.numeric(r_names_fut) / 10) * 10
+  
+  # Compute the mean presence length per decade (per cell)
+  decadal_means_fut <- tapp(length_presence_year_fut, index = r_decades_fut, fun = mean, na.rm = TRUE)
+  
+  # Rename decadal layers
+  names(decadal_means_fut) <- paste0(unique(r_decades_fut))
+  
+  decadal_means_curr_2010 <- subset(decadal_means_curr, "2010")
+  decadal_means_fut_2030_2050 <- subset(decadal_means_fut, c("2030", "2040", "2050"))
+  
+  decadal_means_fut <- c(decadal_means_curr_2010, decadal_means_fut_2030_2050)
+  
+  
+  # Function to compute slope (trend) from 1970s to 2010s for each cell
+  calc_slope_fut <- function(x) {
+    if (all(is.na(x))) return(NA)  # Handle NA pixels
+    decade_values <- c(2010, 2030, 2040, 2050)  # Decade midpoint years
+    lm_fit <- lm(x ~ decade_values)  # Fit linear model
+    return(coef(lm_fit)[2])  # Extract slope coefficient
+  }
+  
+  
+  # Apply function to raster to calculate trend (slope)
+  slope_raster_fut <- app(decadal_means_fut, fun = calc_slope_fut)
+  names(slope_raster_fut) <- "Trend_Slope"
+  
+  # Convert raster to a data frame for plotting
+  slope_df_fut <- as.data.frame(slope_raster_fut, xy = TRUE, na.rm = TRUE)
+  colnames(slope_df_fut) <- c("lon", "lat", "trend")
+  
+  # Find out the highest and lowest slope
+  print(max(slope_df_fut$trend))
+  print(min(slope_df_fut$trend))
+  
+  # Plot
+  ggplot(slope_df_fut) +
+    geom_tile(aes(x = lon, y = lat, fill = trend)) +
+    scale_fill_gradient2(
+      low = "midnightblue", mid = "grey93", high = "firebrick4",
+      midpoint = 0, name = "Trend / Slope",
+      limits = c(-0.33, 0.36) 
+    ) +
+    theme_minimal() +
+    labs(title = paste0("Ixodes ricinus - Trend in Presence Length (2010s-2050s,", s,")"),
+         x = "Longitude", y = "Latitude") +
+    theme(plot.title = element_text(face = "bold"))
+  
+  ggsave(paste0("output_data/plots/duration_trends/I_ricinus_duration_trends_future_",s,".png"), width = 8.5, height = 6)
+  
+  
+} # Close the loop over the three environmental scenarios
+

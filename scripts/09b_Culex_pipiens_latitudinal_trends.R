@@ -1,8 +1,8 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBEV)
+# Disease phenology analysis of Culex pipiens in Europe (primary transmitter of WNV)
 
 # ---------------------------------------------------------------------- #
-#     09a. Past and future latitudinal trends of disease phenology       #
+#     09b. Past and future latitudinal trends of disease phenology       #
 # ---------------------------------------------------------------------- #
 
 # Load the needed packages
@@ -38,15 +38,15 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
     print(a)
     
     # Read in the predictions data
-    r_curr_preds_clim_landuse <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_landuse_",a,"_1970_2019.tif")) # under observed climate and land use change for the years 1970 to 2019
-    r_curr_preds_clim <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_",a,"_1970_2019.tif")) # under observed climate change for the years 1970 to 2019 (mean land use values)
+    r_curr_preds_clim_landuse <- terra::rast(paste0("output_data/results/C_pipiens_preds_clim_landuse_",a,"_1970_2019.tif")) # under observed climate and land use change for the years 1970 to 2019
+    r_curr_preds_clim <- terra::rast(paste0("output_data/results/C_pipiens_preds_clim_",a,"_1970_2019.tif")) # under observed climate change for the years 1970 to 2019 (mean land use values)
     
     for (s in env_scenarios) { # Start of the loop over respective environmental change scenario
       
       print(s)
       
-      r_fut_preds_clim_landuse <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_landuse_",a,"_2030_2070_",s,".tif")) # under scenario of future climate and land use change
-      r_fut_preds_clim <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_",a,"_2030_2070_",s,".tif")) # under future climate change (mean land use values)
+      r_fut_preds_clim_landuse <- terra::rast(paste0("output_data/results/C_pipiens_preds_clim_landuse_",a,"_2030_2070_",s,".tif")) # under scenario of future climate and land use change
+      r_fut_preds_clim <- terra::rast(paste0("output_data/results/C_pipiens_preds_clim_",a,"_2030_2070_",s,".tif")) # under future climate change (mean land use values)
       
       # Generate past time information and assign dates as layer names
       dates_past <- seq(as.Date("1970-01-01"), as.Date("2019-12-01"), by = "month")
@@ -201,10 +201,10 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
           plot.title = element_text(face = "bold", size = 16)
         ) +
         labs(
-          title = paste("Ixodes ricinus -", o, "occurrence probability\nby month, decade, and latitudinal band (",a,",",s,")")
+          title = paste("Culex pipiens -", o, "occurrence probability\nby month, decade, and latitudinal band (",a,",",s,")")
         )
       
-      ggsave(paste0("output_data/plots/latitudinal_trends/I_ricinus_latitudinal_trends_",o,"_occprob_",a,"_",s,".png"), width = 9, height = 9)
+      ggsave(paste0("output_data/plots/latitudinal_trends/C_pipiens_latitudinal_trends_",o,"_occprob_",a,"_",s,".png"), width = 9, height = 9)
       
     } # Close the loop over th three different environmental scenarios
     
@@ -212,49 +212,3 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   
 } # Close the loop over the 95th percentile and mean functions
 
-
-
-
-
-#-------------------------------------------------------------------------------
-
-# 2. Plot the examined latitudinal bands over study plots ----------------------
-
-# Read in the 50 km raster of Europe (used mask)
-europe_mask <- terra::rast("input_data/spatial_data/europe_mask_50km.tif")
-
-# Convert the raster to a data frame
-europe_mask_df <- as.data.frame(europe_mask, xy = TRUE)
-
-# Define breakpoints for continuous latitudinal bands
-breakpoints <- seq(34, 72, length.out = 6)
-
-# Create a data frame for latitudinal bands
-lat_band_lines <- data.frame(
-  lat_min = head(breakpoints, -1),  # All values except the last
-  lat_max = tail(breakpoints, -1), # All values except the first
-  lat_band = paste0("Band ", rev(seq_along(head(breakpoints, -1)))) # Reverse order for naming
-)
-
-# Convert 'lat_band' to a factor
-lat_band_lines$lat_band <- factor(lat_band_lines$lat_band)
-
-ggplot() +
-  geom_tile(data = europe_mask_df, aes(x = x, y = y)) + 
-  geom_rect(data = lat_band_lines, aes(xmin = -Inf, xmax = Inf, ymin = lat_min, ymax = lat_max, fill = lat_band), 
-            alpha = 0.45) + 
-  scale_fill_viridis_d(
-    option = "rocket",
-    name = "Latitudinal bands"
-  ) +
-  labs(title = "Latitudinal bands over Europe used for analysis") +
-  theme_minimal() +
-  theme(
-    panel.grid.major = element_line(color = "gray90"),
-    panel.grid.minor = element_blank(),
-    axis.text = element_text(size = 10),
-    axis.title = element_blank(),
-    plot.title = element_text(face = "bold", size = 16)
-  ) 
-
-ggsave("output_data/plots/latitudinal_trends/latitudinal_bands_Europe.png", width = 7, height = 5)

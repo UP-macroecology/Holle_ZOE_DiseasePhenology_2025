@@ -1,8 +1,8 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBEV)
+# Disease phenology analysis of Culex pipiens in Europe (primary transmitter of WNV)
 
 # ---------------------------------------------------------------------- #
-#                          06a. Model prediction                         #
+#                          06b. Model prediction                         #
 # ---------------------------------------------------------------------- #
 
 
@@ -17,8 +17,8 @@ library(tidyverse)
 
 
 # Load needed data
-load("output_data/models/I_ricinus_SDMs.RData") # Load fitted models
-load("output_data/validation/I_ricinus_validation.RData") # Load validation results
+load("output_data/models/C_pipiens_SDMs.RData") # Load fitted models
+load("output_data/validation/C_pipiens_validation.RData") # Load validation results
 
 
 
@@ -110,7 +110,7 @@ for (y in years) { # Start of the loop over the prediction years
       preds_rf_month[, n] <- rowMeans(sapply(1:background_presence_ratio, FUN=function(i){print(i); predict(models_rf[[n]][[i]], env_df, type='response')}))
       print("BRT")
       preds_brt_month[, n] <- rowMeans(sapply(1:background_presence_ratio, FUN=function(i){print(i); predict.gbm(models_brt[[n]][[i]], env_df, n.trees=models_brt[[n]][[i]]$gbm.call$best.trees, type="response")}))
-
+      
     } # Close the loop over the number of models
     
     # Average the predicitons per algorithm and store them with coordinate information
@@ -171,12 +171,12 @@ for (y in years) { # Start of the loop over the prediction years
 
 
 # Save the raster outputs
-terra::writeRaster(r_curr_preds_clim_landuse_ens, filename = "output_data/results/I_ricinus_preds_clim_landuse_ens_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_ens_bin, filename = "output_data/results/I_ricinus_preds_clim_landuse_ens_bin_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_glm, filename = "output_data/results/I_ricinus_preds_clim_landuse_glm_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_gam, filename = "output_data/results/I_ricinus_preds_clim_landuse_gam_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_rf, filename = "output_data/results/I_ricinus_preds_clim_landuse_rf_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_brt, filename = "output_data/results/I_ricinus_preds_clim_landuse_brt_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_landuse_ens, filename = "output_data/results/C_pipiens_preds_clim_landuse_ens_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_landuse_ens_bin, filename = "output_data/results/C_pipiens_preds_clim_landuse_ens_bin_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_landuse_glm, filename = "output_data/results/C_pipiens_preds_clim_landuse_glm_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_landuse_gam, filename = "output_data/results/C_pipiens_preds_clim_landuse_gam_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_landuse_rf, filename = "output_data/results/C_pipiens_preds_clim_landuse_rf_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_landuse_brt, filename = "output_data/results/C_pipiens_preds_clim_landuse_brt_1970_2019.tif", overwrite=T)
 
 
 
@@ -333,12 +333,12 @@ for (y in years) { # Start of the loop over the prediction years
 
 
 # Save the raster outputs
-terra::writeRaster(r_curr_preds_noclim_landuse_ens, filename = "output_data/results/I_ricinus_preds_noclim_landuse_ens_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_ens_bin, filename = "output_data/results/I_ricinus_preds_noclim_landuse_ens_bin_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_glm, filename = "output_data/results/I_ricinus_preds_noclim_landuse_glm_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_gam, filename = "output_data/results/I_ricinus_preds_noclim_landuse_gam_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_rf, filename = "output_data/results/I_ricinus_preds_noclim_landuse_rf_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_brt, filename = "output_data/results/I_ricinus_preds_noclim_landuse_brt_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_noclim_landuse_ens, filename = "output_data/results/C_pipiens_preds_noclim_landuse_ens_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_noclim_landuse_ens_bin, filename = "output_data/results/C_pipiens_preds_noclim_landuse_ens_bin_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_noclim_landuse_glm, filename = "output_data/results/C_pipiens_preds_noclim_landuse_glm_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_noclim_landuse_gam, filename = "output_data/results/C_pipiens_preds_noclim_landuse_gam_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_noclim_landuse_rf, filename = "output_data/results/C_pipiens_preds_noclim_landuse_rf_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_noclim_landuse_brt, filename = "output_data/results/C_pipiens_preds_noclim_landuse_brt_1970_2019.tif", overwrite=T)
 
 
 
@@ -419,7 +419,7 @@ for (y in years) { # Start of the loop over the prediction years
       env_df <- data.frame(crds(env_data[[my_preds]]),as.points(env_data[[my_preds]]))
       
       # Keep the values of land use variables constant at their mean
-      for (pred in c("urban", "primary_forest", "cropland", "secondary_forest", "primary_openland", "pasture", "rangeland")) {
+      for (pred in c("urban", "rangeland", "cropland", "secondary_openland", "pasture", "primary_forest", "primary_openland")) {
         env_df[[pred]] <- mean(env_df[[pred]], na.rm = TRUE)
       }
       
@@ -496,12 +496,12 @@ for (y in years) { # Start of the loop over the prediction years
 
 
 # Save the raster outputs
-terra::writeRaster(r_curr_preds_clim_ens, filename = "output_data/results/I_ricinus_preds_clim_ens_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_ens_bin, filename = "output_data/results/I_ricinus_preds_clim_ens_bin_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_glm, filename = "output_data/results/I_ricinus_preds_clim_glm_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_gam, filename = "output_data/results/I_ricinus_preds_clim_gam_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_rf, filename = "output_data/results/I_ricinus_preds_clim_rf_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_brt, filename = "output_data/results/I_ricinus_preds_clim_brt_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_ens, filename = "output_data/results/C_pipiens_preds_clim_ens_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_ens_bin, filename = "output_data/results/C_pipiens_preds_clim_ens_bin_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_glm, filename = "output_data/results/C_pipiens_preds_clim_glm_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_gam, filename = "output_data/results/C_pipiens_preds_clim_gam_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_rf, filename = "output_data/results/C_pipiens_preds_clim_rf_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_curr_preds_clim_brt, filename = "output_data/results/C_pipiens_preds_clim_brt_1970_2019.tif", overwrite=T)
 
 
 
@@ -665,12 +665,12 @@ for (s in scenario) { # Start of the loop over the three different climate forci
   
   
   # Save the raster outputs
-  terra::writeRaster(r_fut_preds_clim_nolanduse_ens, filename = paste0("output_data/results/I_ricinus_preds_clim_nolanduse_ens_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_nolanduse_ens_bin, filename = paste0("output_data/results/I_ricinus_preds_clim_nolanduse_ens_bin_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_nolanduse_glm, filename = paste0("output_data/results/I_ricinus_preds_clim_nolanduse_glm_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_nolanduse_gam, filename = paste0("output_data/results/I_ricinus_preds_clim_nolanduse_gam_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_nolanduse_rf, filename = paste0("output_data/results/I_ricinus_preds_clim_nolanduse_rf_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_nolanduse_brt, filename = paste0("output_data/results/I_ricinus_preds_clim_nolanduse_brt_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_nolanduse_ens, filename = paste0("output_data/results/C_pipiens_preds_clim_nolanduse_ens_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_nolanduse_ens_bin, filename = paste0("output_data/results/C_pipiens_preds_clim_nolanduse_ens_bin_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_nolanduse_glm, filename = paste0("output_data/results/C_pipiens_preds_clim_nolanduse_glm_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_nolanduse_gam, filename = paste0("output_data/results/C_pipiens_preds_clim_nolanduse_gam_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_nolanduse_rf, filename = paste0("output_data/results/C_pipiens_preds_clim_nolanduse_rf_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_nolanduse_brt, filename = paste0("output_data/results/C_pipiens_preds_clim_nolanduse_brt_2030_2070_",s,".tif"), overwrite=T)
   
   
 } # Close the loop over the three climate forcing scenarios
@@ -834,12 +834,12 @@ for (s in scenario) { # Start of the loop over the three different forcing scena
   
   
   # Save the raster outputs
-  terra::writeRaster(r_fut_preds_clim_landuse_ens, filename = paste0("output_data/results/I_ricinus_preds_clim_landuse_ens_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_landuse_ens_bin, filename = paste0("output_data/results/I_ricinus_preds_clim_landuse_ens_bin_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_landuse_glm, filename = paste0("output_data/results/I_ricinus_preds_clim_landuse_glm_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_landuse_gam, filename = paste0("output_data/results/I_ricinus_preds_clim_landuse_gam_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_landuse_rf, filename = paste0("output_data/results/I_ricinus_preds_clim_landuse_rf_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_landuse_brt, filename = paste0("output_data/results/I_ricinus_preds_clim_landuse_brt_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_landuse_ens, filename = paste0("output_data/results/C_pipiens_preds_clim_landuse_ens_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_landuse_ens_bin, filename = paste0("output_data/results/C_pipiens_preds_clim_landuse_ens_bin_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_landuse_glm, filename = paste0("output_data/results/C_pipiens_preds_clim_landuse_glm_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_landuse_gam, filename = paste0("output_data/results/C_pipiens_preds_clim_landuse_gam_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_landuse_rf, filename = paste0("output_data/results/C_pipiens_preds_clim_landuse_rf_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_landuse_brt, filename = paste0("output_data/results/C_pipiens_preds_clim_landuse_brt_2030_2070_",s,".tif"), overwrite=T)
   
   
 } # Close the loop over the three forcing scenarios
@@ -934,7 +934,7 @@ for (s in scenario) { # Start of the loop over the three different forcing scena
         env_df <- data.frame(crds(env_data[[my_preds]]),as.points(env_data[[my_preds]]))
         
         # Keep the values of land use variables constant at their mean
-        for (pred in c("urban", "primary_forest", "cropland", "secondary_forest", "primary_openland", "pasture", "rangeland")) {
+        for (pred in c("urban", "rangeland", "cropland", "secondary_openland", "pasture", "primary_forest", "primary_openland")) {
           env_df[[pred]] <- mean(env_df[[pred]], na.rm = TRUE)
         }
         
@@ -1012,12 +1012,12 @@ for (s in scenario) { # Start of the loop over the three different forcing scena
   
   
   # Save the raster outputs
-  terra::writeRaster(r_fut_preds_clim_ens, filename = paste0("output_data/results/I_ricinus_preds_clim_ens_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_ens_bin, filename = paste0("output_data/results/I_ricinus_preds_clim_ens_bin_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_glm, filename = paste0("output_data/results/I_ricinus_preds_clim_glm_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_gam, filename = paste0("output_data/results/I_ricinus_preds_clim_gam_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_rf, filename = paste0("output_data/results/I_ricinus_preds_clim_rf_2030_2070_",s,".tif"), overwrite=T)
-  terra::writeRaster(r_fut_preds_clim_brt, filename = paste0("output_data/results/I_ricinus_preds_clim_brt_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_ens, filename = paste0("output_data/results/C_pipiens_preds_clim_ens_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_ens_bin, filename = paste0("output_data/results/C_pipiens_preds_clim_ens_bin_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_glm, filename = paste0("output_data/results/C_pipiens_preds_clim_glm_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_gam, filename = paste0("output_data/results/C_pipiens_preds_clim_gam_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_rf, filename = paste0("output_data/results/C_pipiens_preds_clim_rf_2030_2070_",s,".tif"), overwrite=T)
+  terra::writeRaster(r_fut_preds_clim_brt, filename = paste0("output_data/results/C_pipiens_preds_clim_brt_2030_2070_",s,".tif"), overwrite=T)
   
   
 } # Close the loop over the three forcing scenarios
