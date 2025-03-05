@@ -59,11 +59,16 @@ C_pipiens_gbif$database <- "GBIF"
 
 # 2. Downloaded VectorMap data -------------------------------------------------
 
+# Remove rows that have no entry/NAs in their date columns
+I_ricinus_vectormap <- I_ricinus_vectormap %>%
+  filter(!is.na(EarliestDateCollected) & EarliestDateCollected != "",
+         !is.na(LatestDateCollected) & LatestDateCollected != "")
+
 # Only keep occurrences where the columns "EarliestDateCollected" and
 # "LatestDateCollected" coincide in their year and month
-C_pipiens_vectormap <- C_pipiens_vectormap %>% 
-  mutate(EarliestDateCollected = ymd_hm(EarliestDateCollected),
-         LatestDateCollected = ymd_hm(LatestDateCollected),
+I_ricinus_vectormap <- I_ricinus_vectormap %>% 
+  mutate(EarliestDateCollected = mdy_hms(EarliestDateCollected),
+         LatestDateCollected = mdy_hms(LatestDateCollected),
          EarliestYearMonth = format(EarliestDateCollected, "%Y-%m"),
          LatestYearMonth = format(LatestDateCollected, "%Y-%m")
   ) %>%
@@ -77,7 +82,7 @@ C_pipiens_vectormap <- C_pipiens_vectormap[, c("ScientificName", "DecimalLatitud
 
 # Extract the month of collection from Date format
 earliestdatecollected <- C_pipiens_vectormap$EarliestDateCollected
-C_pipiens_vectormap$EarliestDateCollected <- sapply(earliestdatecollected, function(x) month(mdy_hms(x)))
+C_pipiens_vectormap$EarliestDateCollected <- sapply(earliestdatecollected, function(x) month(ymd(x)))
 
 # Change the column names
 colnames(C_pipiens_vectormap) <- c("species", "lat", "lon", "country", "year", "month", "datasource", "coordinate_uncertainty")

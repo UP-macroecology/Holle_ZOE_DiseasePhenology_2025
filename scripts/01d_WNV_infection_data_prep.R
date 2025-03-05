@@ -25,15 +25,16 @@ WNF_infection_data <- read.csv("input_data/raw_infection_data/WNF.csv") # TBE in
 # 1. Extracting the uncertainty of ECDC disease data ---------------------------
 
 # ECDC human case infection data is provided at the NUTS3 level,
-# Retain a map showing the European municipalities on NUTS 3 level (year 2024)
+# Retain a map showing the European municipalities on NUTS 3 level (year 2021)
+# (As we use data until 2019; UK was still reporting surveillance data to ECDC)
 nuts_3 <- gisco_get_nuts(
-  year = "2024",
+  year = "2021",
   epsg = "4326",
   cache = TRUE,
   update_cache = FALSE,
   cache_dir = NULL,
   verbose = FALSE,
-  resolution = "20",
+  resolution = "10",
   spatialtype = "RG",
   country = NULL,
   nuts_id = NULL,
@@ -143,6 +144,10 @@ for (i in 1:nrow(nuts_3_WNF)) { # Start of the loop over all rows
   }
 } # Close the loop over all rows
 
+# Save the data frame stating all infection occurrences and their respective
+# location (for later usage in absence generation)
+save(nuts_3_WNF, file = "output_data/data/nuts_3_WNF.RData")
+
 # Remove entries that stem from municipalities that consist of more than 5 cells
 # as this increases the uncertainty of the reported location
 nuts_3_WNF_filtered <- nuts_3_WNF %>%
@@ -199,3 +204,17 @@ ggplot(nuts_3_cell_count_df, aes(x = x, y = y, fill = num_cells)) +
 # Save the data frame with occurrence points
 save(WNF_occurrences_cleaned, file = "output_data/data/WNF_occurrences_cleaned.RData")
 
+
+
+#-------------------------------------------------------------------------------
+
+# 3. Check countries that provided infection data ------------------------------
+
+# Load the needed package
+library(countrycode)
+
+# Create a vector containing all reporting countries
+reporting_countries <- unique(WNF_infection_data$ReportingCountry)
+
+# Get the country names based on ISO 2-Letter Code
+reporting_countries_full <- countrycode(reporting_countries, origin = "iso2c", destination = "country.name")

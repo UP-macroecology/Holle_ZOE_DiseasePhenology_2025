@@ -161,3 +161,79 @@ for (s in env_scenarios) { # Start the loop over the three environmental scenari
   
 } # Close the loop over the three environmental scenarios
 
+
+
+
+#-------------------------------------------------------------------------------
+
+# 3. Create a tile plot to visualize shifts in duration length over decades ----
+
+# Read in the monthly binary prediction data from 1970 to 2019
+r_curr_preds_clim_landuse_ens_bin <- terra::rast("output_data/results/I_ricinus_preds_clim_landuse_ens_bin_1970_2019.tif")
+r_fut_preds_clim_landuse_ens_bin_126 <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_landuse_ens_bin_2030_2070_ssp126.tif"))
+r_fut_preds_clim_landuse_ens_bin_370 <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_landuse_ens_bin_2030_2070_ssp370.tif"))
+r_fut_preds_clim_landuse_ens_bin_585 <- terra::rast(paste0("output_data/results/I_ricinus_preds_clim_landuse_ens_bin_2030_2070_ssp585.tif"))
+
+# Extract layer names
+rasters_names_curr <- names(r_curr_preds_clim_landuse_ens_bin)
+rasters_names_fut <- names(r_fut_preds_clim_landuse_ens_bin_126)
+
+# Extract years from layer names
+rasters_years_curr <- as.numeric(sub(".*/", "", rasters_names_curr))
+rasters_years_fut <- as.numeric(sub(".*/", "", rasters_names_fut))
+
+# Extract layers by decade
+rasters_1970s <- which(rasters_years_curr >= 1970 & rasters_years_curr < 1980)
+rasters_1970s <- r_curr_preds_clim_landuse_ens_bin[[rasters_1970s]]
+rasters_2010s <- which(rasters_years_curr >= 2010 & rasters_years_curr < 2020)
+rasters_2010s <- r_curr_preds_clim_landuse_ens_bin[[rasters_2010s]]
+rasters_2050s_126 <- which(rasters_years_fut >= 2050 & rasters_years_fut < 2060)
+rasters_2050s_126 <- r_fut_preds_clim_landuse_ens_bin_126[[rasters_2050s_126]]
+rasters_2050s_370 <- which(rasters_years_fut >= 2050 & rasters_years_fut < 2060)
+rasters_2050s_370 <- r_fut_preds_clim_landuse_ens_bin_370[[rasters_2050s_370]]
+rasters_2050s_585 <- which(rasters_years_fut >= 2050 & rasters_years_fut < 2060)
+rasters_2050s_585 <- r_fut_preds_clim_landuse_ens_bin_585[[rasters_2050s_585]]
+
+# Extract the months from layer names
+months_1970s <- as.numeric(sub("^([0-9]{2})/([0-9]{4})$", "\\1", names(rasters_1970s)))
+months_2010s <- as.numeric(sub("^([0-9]{2})/([0-9]{4})$", "\\1", names(rasters_2010s)))  
+months_2050s_126 <- as.numeric(sub("^([0-9]{2})/([0-9]{4})$", "\\1", names(rasters_2050s_126)))  
+months_2050s_370 <- as.numeric(sub("^([0-9]{2})/([0-9]{4})$", "\\1", names(rasters_2050s_370))) 
+months_2050s_585 <- as.numeric(sub("^([0-9]{2})/([0-9]{4})$", "\\1", names(rasters_2050s_585))) 
+
+# Calculate the mean number of cells with monthly presences per decade
+mean_presence_by_month <- function(r_stack, months) {
+  tapply(1:nlyr(r_stack), months, function(i) {
+    # Compute the total presence per layer (global() returns a data frame)
+    presence_counts <- sapply(i, function(layer) global(r_stack[[layer]], fun = "sum", na.rm = TRUE)[1, 1])
+    mean(presence_counts, na.rm = TRUE)  # Take the mean of presence counts for the month
+  })
+}
+
+mean_presences_1970s <- mean_presence_by_month(rasters_1970s, months_1970s)
+mean_presences_2010s <- mean_presence_by_month(rasters_2010s, months_2010s)
+mean_presences_2050s_126 <- mean_presence_by_month(rasters_2050s_126, months_2050s_126)
+mean_presences_2050s_370 <- mean_presence_by_month(rasters_2050s_370, months_2050s_370)
+mean_presences_2050s_585 <- mean_presence_by_month(rasters_2050s_585, months_2050s_585)
+
+df_mean_presences_1970s <- data.frame(month = 1:12, mean_presence = mean_presences_1970s, decade = "1970s")
+df_mean_presences_2010s <- data.frame(month = 1:12, mean_presence = mean_presences_2010s, decade = "2010s")
+df_mean_presences_2050s_126 <- data.frame(month = 1:12, mean_presence = mean_presences_2050s_126, decade = "2050s; ssp126")
+df_mean_presences_2050s_370 <- data.frame(month = 1:12, mean_presence = mean_presences_2050s_370, decade = "2050s; ssp370")
+df_mean_presences_2050s_585 <- data.frame(month = 1:12, mean_presence = mean_presences_2050s_585, decade = "2050s; ssp585")
+
+# Bind the results data frame of the different decades
+df_mean_presences <- rbind(df_mean_presences_1970s, df_mean_presences_2010s, df_mean_presences_2050s_126,
+                           df_mean_presences_2050s_370, df_mean_presences_2050s_585)
+
+# Plot
+ggplot(df_mean_presences, aes(x = month, y = factor(decade), fill = mean_presence)) +
+  geom_tile(color = "white") +
+  scale_fill_viridis_c(option = "magma", name = "Mean count of\npresence cells") +
+  scale_x_continuous(breaks = 1:12, labels = month.abb) +
+  labs(title = "Decadal trends in the activity season duration of Ixodes ricinus across Europe",
+       x = "Month", y = "Decade") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+ggsave("output_data/plots/duration_trends/I_ricinus_duration_trends_activityseason.png", width = 8.5, height = 3.5)

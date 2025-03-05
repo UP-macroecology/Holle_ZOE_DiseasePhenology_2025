@@ -25,15 +25,16 @@ TBEV_infection_data <- read.csv("input_data/raw_infection_data/TBE.csv") # TBE i
 # 1. Extracting the uncertainty of ECDC disease data ---------------------------
 
 # ECDC human case infection data is provided at the NUTS3 level,
-# Retain a map showing the European municipalities on NUTS 3 level (year 2024)
+# Retain a map showing the European municipalities on NUTS 3 level (year 2021)
+# (As we use data until 2019; UK was still reporting surveillance data to ECDC)
 nuts_3 <- gisco_get_nuts(
-  year = "2024",
+  year = "2021",
   epsg = "4326",
   cache = TRUE,
   update_cache = FALSE,
   cache_dir = NULL,
   verbose = FALSE,
-  resolution = "20",
+  resolution = "10",
   spatialtype = "RG",
   country = NULL,
   nuts_id = NULL,
@@ -43,6 +44,9 @@ nuts_3 <- gisco_get_nuts(
 # Rasterise the NUTS3 multipolygon and mask the values that do not belong to the European continent
 nuts_3_raster <- terra::rasterize(nuts_3, europe_mask_50km, field = "NUTS_ID", touches = TRUE)
 nuts_3_raster_mask <- terra::mask(nuts_3_raster, europe_mask_50km)
+
+# Store the raster map of nuts 3 municipalities for later usage during background data generation
+writeRaster(nuts_3_raster_mask, "input_data/spatial_data/nuts_3_raster_mask.tif", overwrite = TRUE)
 
 # Count the number of raster cells for each polygon
 cell_counts_nuts_3 <- terra::freq(nuts_3_raster_mask) %>%
@@ -85,10 +89,20 @@ ggsave("output_data/plots/maps/NUTS3_uncertainty.png", width = 8, height = 5)
 # Provided by TESSy (human case infection data aggregated by NUTS3 level (place of infection),
 # year of infection, month of infection)
 
-# Add another column to the data frame containing the info of the place of 
-# infection on NUTS3 level but coinciding with the column name "NUTS_ID" of the
-# nuts3 multipolygon data frame
-TBEV_infection_data$NUTS_ID <- TBEV_infection_data$PlaceOfInfectionEVD 
+# There are two columns referring to the place of infection (PlaceOfInfection,
+# PlaceOfInfectionEVD), create a column that brings the info of the two columns
+# together
+TBEV_infection_data <- TBEV_infection_data %>%
+  mutate(NUTS_ID = case_when(
+    (PlaceofInfection %in% c("NULL", "UNK") & PlaceOfInfectionEVD %in% c("NULL", "UNK")) ~ "NULL", # Both columns are "NULL" or "UNK"
+    (PlaceofInfection %in% c("NULL", "UNK") & !PlaceOfInfectionEVD %in% c("NULL", "UNK")) ~ PlaceOfInfectionEVD, # PlaceOfInfection is "NULL" or "UNK", use PlaceOfInfectionEVD
+    (!PlaceofInfection %in% c("NULL", "UNK") & PlaceOfInfectionEVD %in% c("NULL", "UNK")) ~ PlaceofInfection, # PlaceOfInfectionEVD is "NULL" or "UNK", use PlaceOfInfection
+    (nchar(PlaceofInfection) == 5 & nchar(PlaceOfInfectionEVD) != 5) ~ PlaceofInfection, # If both columns have NUTS entries, consider the one with 5 strings as these refer to NUTS3 categorisations
+    (nchar(PlaceofInfection) != 5 & nchar(PlaceOfInfectionEVD) == 5) ~ PlaceOfInfectionEVD,
+    (nchar(PlaceofInfection) == 5 & nchar(PlaceOfInfectionEVD) == 5) ~ PlaceOfInfectionEVD,
+    TRUE ~ NA_character_
+  ))
+
 
 # Only keep rows of confirmed cases that were not imported and were reported until
 # the year 2020 (as these are not covered by environmental data)
@@ -142,6 +156,10 @@ for (i in 1:nrow(nuts_3_TBEV)) { # Start of the loop over all rows
     
   }
 } # Close the loop over all rows
+
+# Save the data frame stating all infection occurrences and their respective
+# location (for later usage in absence generation)
+save(nuts_3_TBEV, file = "output_data/data/nuts_3_TBEV.RData")
 
 # Remove entries that stem from municipalities that consist of more than 5 cells
 # as this increases the uncertainty of the reported location
@@ -200,3 +218,16 @@ ggplot(nuts_3_cell_count_df, aes(x = x, y = y, fill = num_cells)) +
 save(TBEV_occurrences_cleaned, file = "output_data/data/TBEV_occurrences_cleaned.RData")
 
 
+
+#-------------------------------------------------------------------------------
+
+# 3. Check countries that provided infection data ------------------------------
+
+# Load the needed package
+library(countrycode)
+
+# Create a vector containing all reporting countries
+reporting_countries <- unique(TBEV_infection_data$ReportingCountry)
+
+# Get the country names based on ISO 2-Letter Code
+reporting_countries_full <- countrycode(reporting_countries, origin = "iso2c", destination = "country.name")

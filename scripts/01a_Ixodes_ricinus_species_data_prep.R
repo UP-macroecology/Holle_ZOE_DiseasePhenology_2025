@@ -12,7 +12,6 @@
 library(CoordinateCleaner)
 library(tidyverse)
 library(tibble)
-library(maps)
 library(lubridate)
 
 
@@ -59,11 +58,16 @@ I_ricinus_gbif$database <- "GBIF"
 
 # 2. Downloaded VectorMap data -------------------------------------------------
 
+# Remove rows that have no entry/NAs in their date columns
+I_ricinus_vectormap <- I_ricinus_vectormap %>%
+  filter(!is.na(EarliestDateCollected) & EarliestDateCollected != "",
+         !is.na(LatestDateCollected) & LatestDateCollected != "")
+
 # Only keep occurrences where the columns "EarliestDateCollected" and
 # "LatestDateCollected" coincide in their year and month
 I_ricinus_vectormap <- I_ricinus_vectormap %>% 
-  mutate(EarliestDateCollected = ymd_hm(EarliestDateCollected),
-         LatestDateCollected = ymd_hm(LatestDateCollected),
+  mutate(EarliestDateCollected = mdy_hms(EarliestDateCollected),
+         LatestDateCollected = mdy_hms(LatestDateCollected),
          EarliestYearMonth = format(EarliestDateCollected, "%Y-%m"),
          LatestYearMonth = format(LatestDateCollected, "%Y-%m")
   ) %>%
@@ -77,14 +81,14 @@ I_ricinus_vectormap <- I_ricinus_vectormap[, c("ScientificName", "DecimalLatitud
 
 # Extract the month of collection from Date format
 earliestdatecollected <- I_ricinus_vectormap$EarliestDateCollected
-I_ricinus_vectormap$EarliestDateCollected <- sapply(earliestdatecollected, function(x) month(mdy_hms(x)))
+I_ricinus_vectormap$EarliestDateCollected <- sapply(earliestdatecollected, function(x) month(ymd(x)))
 
 # Change the column names
 colnames(I_ricinus_vectormap) <- c("species", "lat", "lon", "country", "year", "month", "datasource", "coordinate_uncertainty")
 
 # Only retain occurrences on the European continent
 I_ricinus_vectormap <- I_ricinus_vectormap[I_ricinus_vectormap$lon >= -31 & I_ricinus_vectormap$lon <= 40 & 
-                                             I_ricinus_vectormap$lat >= 34 & I_ricinus_vectormap$lat <= 72, ]
+                                           I_ricinus_vectormap$lat >= 34 & I_ricinus_vectormap$lat <= 72, ]
 
 
 # Add a column name that indicates the used database
@@ -106,7 +110,8 @@ I_ricinus_occurrences_cleaned <- I_ricinus_occurrences %>%
   dplyr::filter(!(is.na(lat) | is.na(lon)), # only records with coordinates
                 !(lat == lon | lat == 0 | lon == 0), # coordinates should not be equal or zero
                 !is.na(month), # only records with specified month
-                !(is.na(coordinate_uncertainty) | coordinate_uncertainty > 25000), # coordinate precision < 25000m  to still fall within cell (50km resolution)
+                #!(is.na(coordinate_uncertainty) | coordinate_uncertainty > 25000), # coordinate precision < 25000m  to still fall within cell (50km resolution)
+                (is.na(coordinate_uncertainty) | coordinate_uncertainty <= 25000),
                 !(year < 1970 | year > 2019)) %>% # recent years
   distinct(lon, lat, month, year, .keep_all = TRUE) %>% # remove entries with duplicate coordinate records within the same month of the same year
   clean_coordinates(lon = "lon", lat = "lat", species = "species", countries = "country", 
