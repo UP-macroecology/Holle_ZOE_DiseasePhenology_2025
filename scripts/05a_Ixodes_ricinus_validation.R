@@ -1,5 +1,5 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBEV)
+# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBE)
 
 #-------------------------------------------------------------------------------
 
@@ -344,10 +344,6 @@ save(m_glm_preds_cv_all, glm_performances, m_gam_preds_cv_all, gam_performances,
 
 # 3. Monthly model performances ------------------------------------------------
 
-# Read in the needed data
-load("output_data/models/I_ricinus_SDMs.RData") # The occurrence data frame
-load("output_data/validation/I_ricinus_validation.RData") # The cross-validated ensemble predictions
-
 # Create a vector containing the months of a year
 month <- str_pad(1:12, width = 2, pad = "0")
 
@@ -395,14 +391,16 @@ for (m in month) { # Start of the loop over all months
 
 # 4. Create response curves of ensemble predictions ----------------------------
 
-# Read in the needed data
-load("output_data/models/I_ricinus_SDMs.RData") # The different models and selected predictor variables
+
+# Create an empty data frame to store the ensemble predictions for partial response plots
+I_ricinus_response_data <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(I_ricinus_response_data) <- c("environmental_values", "predicted_values", "species", "predictor")
 
 # Create a vector with all predictors within the models, soley the temperature
 # variables, and the remaining variables that are used in all models
-my_preds_all <- c("tas", "tasmin", "tasmax", "urban", "primary_forest", "secondary_forest", "cropland", "primary_openland", "pasture", "pr", "hurs", "rangeland")
+my_preds_all <- unique(unlist(my_preds_list))
 temp_var <- c("tas", "tasmin", "tasmax")
-remain_var <- c("urban", "primary_forest", "secondary_forest", "cropland", "primary_openland", "pasture", "pr", "hurs", "rangeland")
+remain_var <- setdiff(my_preds_all, temp_var)
 
 
 for (p in my_preds_all) { # Loop through all predictor variables
@@ -532,21 +530,22 @@ for (p in my_preds_all) { # Loop through all predictor variables
   } # Close if-condition
   
   # Prepare a data frame to plot response curves
-  plot_response <- data.frame(environmental_values = dummy_data[,p], predicted_values = ens_preds_p,
-                              sd = ens_sd_p)
+  plot_response <- data.frame(environmental_values = dummy_data[,p], predicted_values = ens_preds_p)
   
-  # Add bounds to the data frame
-  plot_response$upper_bound <- plot_response$predicted_values + plot_response$sd
-  plot_response$lower_bound <- plot_response$predicted_values - plot_response$sd
+  # Add species info to prediction data frame
+  plot_response$species <- "Ixodes ricinus"
+  
+  # Add predictor info to prediction data frame
+  plot_response$predictor <- p
+  
+  # Bind the predictions per variable to the comprehensive results data frame
+  I_ricinus_response_data <- rbind(I_ricinus_response_data, plot_response)
   
   
   # Plot the response curve
   ggplot(plot_response, aes(x = environmental_values, y = predicted_values)) +
-    geom_smooth(method = "lm", formula = y ~ x + I(x^2), color = "black", linewidth = 0.65, se = FALSE) +
-    # geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), color = "black", size = 0.65, se = FALSE) +
-    geom_ribbon(aes(ymin = predicted_values - sd, ymax = predicted_values + sd), 
-                fill = "grey24", alpha = 0.2) +
-    ylim(pmin(0, min(plot_response$lower_bound, na.rm = TRUE)), pmax(1, max(plot_response$upper_bound, na.rm = TRUE))) +
+    geom_line(color = "black", linewidth = 0.65) +
+    ylim(0,1) +
     xlim(min(plot_response$environmental_values), max(plot_response$environmental_values)) +
     labs(title = paste0(p), x = "Environmental values", y = "Predicted values") +
     theme_minimal() +
@@ -556,5 +555,8 @@ for (p in my_preds_all) { # Loop through all predictor variables
   
   
 } # Close the loop over the different predictor variables
+
+# Save the data frame containing the ensemble predictions for partial response plots
+save(I_ricinus_response_data, file = "output_data/validation/I_ricinus_response_data.RData")
     
     

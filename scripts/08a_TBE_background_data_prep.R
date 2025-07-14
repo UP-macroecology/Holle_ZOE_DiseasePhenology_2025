@@ -1,8 +1,8 @@
 # ZOE project 
-# Disease phenology analysis of TBEV in Europe 
+# Disease phenology analysis of TBE in Europe 
 
 # ---------------------------------------------------------------------- #
-#                    07a. Background data preparation                    #
+#                    08a. Background data preparation                    #
 # ---------------------------------------------------------------------- #
 
 
@@ -15,9 +15,9 @@ library(tidyverse)
 # Load needed objects
 source("scripts/00_functions.R") # Get the thin function
 nuts_3_raster_mask <- terra::rast("input_data/spatial_data/nuts_3_raster_mask.tif") # Background mask of EU/EEA countries in a 50 km resolution
-load("output_data/data/TBEV_occurrences_cleaned.RData") # Infection occurrence data
-r_curr_preds_clim_landuse <- terra::rast("output_data/results/I_ricinus_preds_clim_landuse_ens_1970_2019.tif") # Ensemble predictions of occurrence probability of Ixodes ricinus
-load("output_data/data/nuts_3_TBEV.RData") # Data frame containing all infection points, also of municipalities consisting of > 5 cells
+load("output_data/data/TBE_occurrences_cleaned.RData") # Infection occurrence data
+r_curr_preds_clim_landuse <- terra::rast("output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_ens_1970_2019.tif") # Ensemble predictions of occurrence probability (under factual climate and land use) of main vector species Ixodes ricinus
+load("output_data/data/nuts_3_TBE.RData") # Data frame containing all infection points, also of municipalities consisting of > 1 cell
 
 
 # Prepare path to data folder
@@ -25,15 +25,15 @@ datapath_env <- file.path("input_data/environmental_data/ISIMIP3a/")
 
 # Create a sequence of dates with monthly steps, that are temporally
 # covered by the environmental data and infection data
-start_year <- min(TBEV_occurrences_cleaned$year) # Find the year of earliest observation
+start_year <- min(TBE_occurrences_cleaned$year) # Find the year of earliest observation
 start_date <- as.Date(paste0(start_year,"-01-01")) # Define start date
 end_date <- as.Date("2019-12-01") # Define end date
-date_sequence_month <- seq.Date(from = start_date, to = end_date, by = "month") # create a monthly sequence
+date_sequence_month <- seq.Date(from = start_date, to = end_date, by = "month") # Create a monthly sequence
 date_sequence <- format(date_sequence_month, "%m/%Y") # Extract year and month from dates
 
 # Format the months within the data frames of cleaned infection data
-TBEV_occurrences_cleaned$month <- sprintf("%02d", as.numeric(TBEV_occurrences_cleaned$month))
-nuts_3_TBEV$DateUsedForStatisticsMonth <- sprintf("%02d", as.numeric(nuts_3_TBEV$DateUsedForStatisticsMonth))
+TBE_occurrences_cleaned$month <- sprintf("%02d", as.numeric(TBE_occurrences_cleaned$month))
+nuts_3_TBE$DateUsedForStatisticsMonth <- sprintf("%02d", as.numeric(nuts_3_TBE$DateUsedForStatisticsMonth))
 
 # Prepare the EU/EEA mask to only have values of 1 or NA
 eu_eea_mask <- nuts_3_raster_mask
@@ -49,18 +49,17 @@ ECDC_reporting_countries <- c("BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI",
                               "SE", "IS", "LI", "NO")
 
 # Select only the relevant columns, order them, and rename the id column
-TBEV_occurrences_cleaned <- TBEV_occurrences_cleaned[c("lon", "lat", "occ", "year", "month")]
+TBE_occurrences_cleaned <- TBE_occurrences_cleaned[c("lon", "lat", "occ", "year", "month")]
 
-# Create an empty data frame to store the thinned presences and background data
-TBEV_occ_env <- data.frame(matrix(ncol = 20, nrow = 0))
-colnames(TBEV_occ_env) <- c("lon", "lat", "occ", "year", "month", "ID", "pr", "tas", "tasmax", "tasmin", "hurs", "primary_forest", "primary_openland", "secondary_forest", 
-                            "secondary_openland", "pasture", "rangeland", "cropland", "urban", "I_ricinus")
+# Create an empty data frame to store the thinned presences and absence data
+TBE_occ_env <- data.frame(matrix(ncol = 12, nrow = 0))
+colnames(TBE_occ_env) <- c("lon", "lat", "occ", "year", "month", "ID", "pr", "tas", "tasmax", "tasmin", "hurs", "I_ricinus")
 
 
 
 # Loop over all dates in the sequence, 
-# remove duplicates in 50 km² cells, generate background data,
-# and match the presence and background data with the time-specific environmental data.
+# remove duplicates in 50 km² cells, generate absence data,
+# and match the presence and absence data with the time-specific environmental data.
 for (d in date_sequence) { # Start of the loop over all dates
   
   # Extract month and year from date
@@ -70,7 +69,7 @@ for (d in date_sequence) { # Start of the loop over all dates
   print(y)
   
   # Subset the infection occurrence data frame by each date (month and year)
-  subset_year_month <- subset(TBEV_occurrences_cleaned, TBEV_occurrences_cleaned$year == y & TBEV_occurrences_cleaned$month == m)
+  subset_year_month <- subset(TBE_occurrences_cleaned, TBE_occurrences_cleaned$year == y & TBE_occurrences_cleaned$month == m)
   
   
   if (nrow(subset_year_month) > 0) { # Just continue with preparation process if occurrences are available for the date
@@ -99,11 +98,11 @@ for (d in date_sequence) { # Start of the loop over all dates
     print("start with background generation")
     
     # Retrieve all NUTS3 municipalities that reported infections for that month-year
-    # combination (also NUTS3 municipalities consisting of > 5 cells)
-    subset_year_month_all <- nuts_3_TBEV[nuts_3_TBEV$DateUsedForStatisticsYear == y & 
-                                           nuts_3_TBEV$DateUsedForStatisticsMonth == m, ]
+    # combination (also NUTS3 municipalities consisting of > 1 cell)
+    subset_year_month_all <- nuts_3_TBE[nuts_3_TBE$DateUsedForStatisticsYear == y & 
+                                          nuts_3_TBE$DateUsedForStatisticsMonth == m, ]
     
-    subset_year_month_all_nuts <- unique(subset_year_month_all$NUTS_ID)
+    subset_year_month_all_nuts <- unique(subset_year_month_all$new_municipality)
 
     
     # Create absence points in all cells of NUTS3 municipalities where no infection
@@ -124,7 +123,7 @@ for (d in date_sequence) { # Start of the loop over all dates
     points_all_cells$country_code <- substr(points_all_cells$NUTS_ID, 1, 2)
     
     # Only keep points where NUTS3 is non-reporting and country is in the EU/EEA
-    # mandatory suveillance system
+    # mandatory surveillance system
     abs_points <- points_all_cells[points_all_cells$NUTS_ID %in% non_reporting_nuts3 &
                                    points_all_cells$country_code %in% ECDC_reporting_countries, ]
     
@@ -168,11 +167,11 @@ for (d in date_sequence) { # Start of the loop over all dates
     
     
     # Join presence and background data
-    TBEV_occ_thinned <- rbind(occ_coords_thinned, abs_coords_thinned)
+    TBE_occ_thinned <- rbind(occ_coords_thinned, abs_coords_thinned)
     
     # Add the year and month as information in columns
-    TBEV_occ_thinned$year <- y
-    TBEV_occ_thinned$month <- m
+    TBE_occ_thinned$year <- y
+    TBE_occ_thinned$month <- m
     
     
     
@@ -184,35 +183,33 @@ for (d in date_sequence) { # Start of the loop over all dates
     
     # Load the environmental data for the specific year and month
     Climate_data <- terra::rast(paste0(datapath_env, "/Climate/processed_data/Climate_data_",m,"_",y,".tif")) # Climate data
-    LandUse_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_",y,".tif")) # Land cover data
-    Species_data <- r_curr_preds_clim_landuse[[paste0(m,"/",y)]] # Occurrence probabilities of the vector species Ixodes ricinus
+    Species_data <- r_curr_preds_clim_landuse[[paste0(m,"/",y)]] # Occurrence probabilities of the vector species Ixodes ricinus (under factual climate and land use)
     
-    # Make sure the extents of climate and land use data matches the
+    # Make sure the extents of climate data matches the
     # species prediction data
     Climate_data <- terra::crop(Climate_data, Species_data)
-    LandUse_data <- terra::crop(LandUse_data, Species_data)
     
     # Make sure the species data has the correct name
     names(Species_data) <- "I_ricinus"
     
     # Stack the environmental data
-    env_data <- c(Climate_data, LandUse_data, Species_data)
+    env_data <- c(Climate_data, Species_data)
     
     # Extract the environmental values per occurrence cell
-    TBEV_occ_env_date <- cbind(TBEV_occ_thinned, terra::extract(x = env_data, y = TBEV_occ_thinned[,c('lon','lat')]))
+    TBE_occ_env_date <- cbind(TBE_occ_thinned, terra::extract(x = env_data, y = TBE_occ_thinned[,c('lon','lat')]))
     
     # Drop NA for the environmental variables 
-    TBEV_occ_env_date <- TBEV_occ_env_date %>% drop_na()
+    TBE_occ_env_date <- TBE_occ_env_date %>% drop_na()
     
     # Check for duplicates
-    duplicated(TBEV_occ_env_date$ID)
+    duplicated(TBE_occ_env_date$ID)
     
     # Only retain non-duplicated cells
-    TBEV_occ_env_date <- TBEV_occ_env_date[!duplicated(TBEV_occ_env_date$ID),]
+    TBE_occ_env_date <- TBE_occ_env_date[!duplicated(TBE_occ_env_date$ID),]
     
     # Add the thinned presences and background data belonging to the specific year and month to the 
     # prepared results data frame
-    TBEV_occ_env <- rbind(TBEV_occ_env, TBEV_occ_env_date)
+    TBE_occ_env <- rbind(TBE_occ_env, TBE_occ_env_date)
     
     
   } else if (nrow(subset_year_month) == 0) { print("no data available for the year-month combination")
@@ -221,20 +218,15 @@ for (d in date_sequence) { # Start of the loop over all dates
 } # End of loop over dates
 
 
-# Get a summary of presence and background data numbers
-table(TBEV_occ_env$occ) # 1: 2696, 0: 118067
-print(table(TBEV_occ_env$month[TBEV_occ_env$occ == 1]))
+
+# Get a summary of presence and absence data numbers
+table(TBE_occ_env$occ) # 1: 2696, 0: 118067
+print(table(TBE_occ_env$month[TBE_occ_env$occ == 1]))
 
 # Save the resulting data frame, containing thinned presence and background data,
 # joined with the respective environmental data of year and month
-save(TBEV_occ_env, file = "output_data/data/TBEV_occ_env.RData")
+save(TBE_occ_env, file = "output_data/data/TBE_occ_env.RData")
 
 
-
-# Map the thinned presences and background data
-# library(maps)
-maps::map('world',xlim=c(-31,40), ylim=c(34,72))
-points(TBEV_occ_env$lon[TBEV_occ_env$occ == 0], TBEV_occ_env$lat[TBEV_occ_env$occ == 0], col='steelblue4',  pch=19, cex = 0.5)
-points(TBEV_occ_env$lon[TBEV_occ_env$occ == 1], TBEV_occ_env$lat[TBEV_occ_env$occ == 1], col='goldenrod',  pch=19, cex = 0.5)
 
 

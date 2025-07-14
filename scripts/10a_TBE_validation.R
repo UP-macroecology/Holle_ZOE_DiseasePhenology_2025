@@ -1,10 +1,10 @@
-# Disease phenology analysis of West Nile Fever in Europe
-
-#-------------------------------------------------------------------------------
+# ZOE project 
+# Disease phenology analysis of TBE in Europe 
 
 # ---------------------------------------------------------------------- #
-#                          09b. Model validation                         #
+#                          10a. Model validation                         #
 # ---------------------------------------------------------------------- #
+
 
 
 # Load needed packages
@@ -22,7 +22,8 @@ source("scripts/00_functions.R") # Get the function for SDM evaluation,
 # Boyce index with smoothing methods (Liu et al. (2024)), and predict function
 
 # Read in SDM models
-load("output_data/models/WNF_SDMs.RData")
+load("output_data/models/TBE_SDMs.RData")
+
 
 
 
@@ -32,7 +33,7 @@ load("output_data/models/WNF_SDMs.RData")
 
 # Part the presence-background dataset into 5 folds
 kfolds <- 5
-ks <- dismo::kfold(seq_len(nrow(WNF_occ_env)), k = kfolds)
+ks <- dismo::kfold(seq_len(nrow(TBE_occ_env)), k = kfolds)
 
 
 
@@ -43,12 +44,12 @@ print("GLM")
 glm_performances <- list()
 
 # Create a matrix to store the cross-validated predictions of the three models
-m_glm_preds_cv_all <- matrix(nrow=nrow(WNF_occ_env), ncol=length(models_glm))
+m_glm_preds_cv_all <- matrix(nrow=nrow(TBE_occ_env), ncol=length(models_glm))
 
 for (glm_index in 1:length(models_glm)) { # Start of the loop over all three models
   
   print(paste("Evaluating GLM", glm_index))
-  m_glm_preds_cv <- rep(NA, nrow(WNF_occ_env))
+  m_glm_preds_cv <- rep(NA, nrow(TBE_occ_env))
   
   # Extract predictors from model
   model_name <- names(models_glm)[glm_index]
@@ -56,8 +57,8 @@ for (glm_index in 1:length(models_glm)) { # Start of the loop over all three mod
   print(my_preds)
   
   for(i in seq_len(kfolds)) { # Start of the loop over k folds
-    cv_train <- WNF_occ_env[ks != i,]
-    cv_test <- WNF_occ_env[ks == i,]
+    cv_train <- TBE_occ_env[ks != i,]
+    cv_test <- TBE_occ_env[ks == i,]
     cv_weights <- weights[ks != i]
     
     cv_glm <- update(models_glm[[glm_index]], data = cv_train, weights = cv_weights)
@@ -66,12 +67,12 @@ for (glm_index in 1:length(models_glm)) { # Start of the loop over all three mod
   
   
   # Calculate performance measures
-  m_glm_perf_cv <- evalSDM(WNF_occ_env$occ, m_glm_preds_cv, weights = weights)
+  m_glm_perf_cv <- evalSDM(TBE_occ_env$occ, m_glm_preds_cv, weights = weights)
   
   # Calculate Boyce index with smoothing methods
-  presences <- which(WNF_occ_env$occ == 1)
+  presences <- which(TBE_occ_env$occ == 1)
   m_glm_preds_cv_presences <- m_glm_preds_cv[presences] # Just retain the predictions of the presences based on indices
-  absences <- which(WNF_occ_env$occ == 0) # Extract the position index of background data
+  absences <- which(TBE_occ_env$occ == 0) # Extract the position index of background data
   m_glm_preds_cv_absences <- m_glm_preds_cv[absences] # Just retain the predictions of the absences based on indices
   m_glm_boyce_cv <- sfbi(m_glm_preds_cv_presences, m_glm_preds_cv_absences, ktry = 10) # Apply sfbi function
   
@@ -101,12 +102,12 @@ print("GAM")
 gam_performances <- list()
 
 # Create a matrix to store the cross-validated predictions of the three models
-m_gam_preds_cv_all <- matrix(nrow=nrow(WNF_occ_env), ncol=length(models_gam))
+m_gam_preds_cv_all <- matrix(nrow=nrow(TBE_occ_env), ncol=length(models_gam))
 
 for (gam_index in 1:length(models_gam)) { # Start of the loop over all three models
   
   print(paste("Evaluating GAM", gam_index))
-  m_gam_preds_cv <- rep(NA, nrow(WNF_occ_env))
+  m_gam_preds_cv <- rep(NA, nrow(TBE_occ_env))
   
   # Extract predictors from model
   model_name <- names(models_gam)[gam_index]
@@ -114,8 +115,8 @@ for (gam_index in 1:length(models_gam)) { # Start of the loop over all three mod
   print(my_preds)
   
   for(i in seq_len(kfolds)) { # Start of the loop over k folds
-    cv_train <- WNF_occ_env[ks != i,]
-    cv_test <- WNF_occ_env[ks == i,]
+    cv_train <- TBE_occ_env[ks != i,]
+    cv_test <- TBE_occ_env[ks == i,]
     cv_weights <- weights[ks != i]
     
     cv_gam <- update(models_gam[[gam_index]], data = cv_train, weights = cv_weights)
@@ -124,12 +125,12 @@ for (gam_index in 1:length(models_gam)) { # Start of the loop over all three mod
   
   
   # Calculate performance measures
-  m_gam_perf_cv <- evalSDM(WNF_occ_env$occ, m_gam_preds_cv, weights = weights)
+  m_gam_perf_cv <- evalSDM(TBE_occ_env$occ, m_gam_preds_cv, weights = weights)
   
   # Calculate Boyce index with smoothing methods
-  presences <- which(WNF_occ_env$occ == 1)
+  presences <- which(TBE_occ_env$occ == 1)
   m_gam_preds_cv_presences <- m_gam_preds_cv[presences] # Just retain the predictions of the presences based on indices
-  absences <- which(WNF_occ_env$occ == 0) # Extract the position index of background data
+  absences <- which(TBE_occ_env$occ == 0) # Extract the position index of background data
   m_gam_preds_cv_absences <- m_gam_preds_cv[absences] # Just retain the predictions of the absences based on indices
   m_gam_boyce_cv <- sfbi(m_gam_preds_cv_presences, m_gam_preds_cv_absences, ktry = 10) # Apply sfbi function
   
@@ -159,13 +160,13 @@ print("RF")
 rf_performances <- list()
 
 # Create a matrix to store the cross-validated predictions of the three models
-m_rf_preds_cv_all <- matrix(nrow=nrow(WNF_occ_env), ncol=length(models_rf))
+m_rf_preds_cv_all <- matrix(nrow=nrow(TBE_occ_env), ncol=length(models_rf))
 
 
 for (rf_index in 1:length(models_rf)) { # Start of the loop over all models
   
   print(paste("Evaluating RF", rf_index))
-  m_rf_preds_cv <- rep(NA, nrow(WNF_occ_env))
+  m_rf_preds_cv <- rep(NA, nrow(TBE_occ_env))
   
   # Extract predictors from model
   model_name <- names(models_rf)[rf_index]
@@ -173,8 +174,8 @@ for (rf_index in 1:length(models_rf)) { # Start of the loop over all models
   print(my_preds)
   
   for(i in seq_len(kfolds)) { # Start of the loop over k folds
-    cv_train <- WNF_occ_env[ks != i,]
-    cv_test <- WNF_occ_env[ks == i,]
+    cv_train <- TBE_occ_env[ks != i,]
+    cv_test <- TBE_occ_env[ks == i,]
     
     cv_rf <- update(models_rf[[rf_index]], data = cv_train)
     m_rf_preds_cv[ks == i] <- predict(cv_rf, cv_test, type = "response")
@@ -182,12 +183,12 @@ for (rf_index in 1:length(models_rf)) { # Start of the loop over all models
   }
   
   # Calculate performance measures
-  m_rf_perf_cv <- evalSDM(WNF_occ_env$occ, m_rf_preds_cv, weights = weights)
+  m_rf_perf_cv <- evalSDM(TBE_occ_env$occ, m_rf_preds_cv, weights = weights)
   
   # Calculate Boyce index with smoothing methods
-  presences <- which(WNF_occ_env$occ == 1)
+  presences <- which(TBE_occ_env$occ == 1)
   m_rf_preds_cv_presences <- m_rf_preds_cv[presences] # Just retain the predictions of the presences based on indices
-  absences <- which(WNF_occ_env$occ == 0) # Extract the position index of background data
+  absences <- which(TBE_occ_env$occ == 0) # Extract the position index of background data
   m_rf_preds_cv_absences <- m_rf_preds_cv[absences] # Just retain the predictions of the absences based on indices
   m_rf_boyce_cv <- sfbi(m_rf_preds_cv_presences, m_rf_preds_cv_absences, ktry = 10) # Apply sfbi function
   
@@ -210,20 +211,20 @@ avg_rf_performances <- as.data.frame(t(avg_rf_performances))
 
 
 
-# BRT
+# RF
 print("BRT")
 
 # Initialise a list to store the performance measures for each model
 brt_performances <- list()
 
 # Create a matrix to store the cross-validated predictions of the three models
-m_brt_preds_cv_all <- matrix(nrow=nrow(WNF_occ_env), ncol=length(models_brt))
+m_brt_preds_cv_all <- matrix(nrow=nrow(TBE_occ_env), ncol=length(models_brt))
 
 
 for (brt_index in 1:length(models_brt)) { # Start of the loop over all models
   
   print(paste("Evaluating BRT", brt_index))
-  m_brt_preds_cv <- rep(NA, nrow(WNF_occ_env))
+  m_brt_preds_cv <- rep(NA, nrow(TBE_occ_env))
   
   # Extract predictors from model
   model_name <- names(models_brt)[brt_index]
@@ -231,9 +232,9 @@ for (brt_index in 1:length(models_brt)) { # Start of the loop over all models
   print(my_preds)
   
   for(i in seq_len(kfolds)) { # Start of the loop over k folds
-    cv_train <- WNF_occ_env[ks != i,]
+    cv_train <- TBE_occ_env[ks != i,]
     names(cv_train)[names(cv_train)=='occ'] <- models_brt[[brt_index]]$response.name
-    cv_test <- WNF_occ_env[ks == i,]
+    cv_test <- TBE_occ_env[ks == i,]
     
     cv_brt <- gbm::gbm(models_brt[[brt_index]]$call, 'bernoulli', data = cv_train[,c( models_brt[[brt_index]]$response.name, my_preds)],
                        n.trees=models_brt[[brt_index]]$gbm.call$best.trees,
@@ -246,12 +247,12 @@ for (brt_index in 1:length(models_brt)) { # Start of the loop over all models
   }
   
   # Calculate performance measures
-  m_brt_perf_cv <- evalSDM(WNF_occ_env$occ, m_brt_preds_cv, weights = weights)
+  m_brt_perf_cv <- evalSDM(TBE_occ_env$occ, m_brt_preds_cv, weights = weights)
   
   # Calculate Boyce index with smoothing methods
-  presences <- which(WNF_occ_env$occ == 1)
+  presences <- which(TBE_occ_env$occ == 1)
   m_brt_preds_cv_presences <- m_brt_preds_cv[presences] # Just retain the predictions of the presences based on indices
-  absences <- which(WNF_occ_env$occ == 0) # Extract the position index of background data
+  absences <- which(TBE_occ_env$occ == 0) # Extract the position index of background data
   m_brt_preds_cv_absences <- m_brt_preds_cv[absences] # Just retain the predictions of the absences based on indices
   m_brt_boyce_cv <- sfbi(m_brt_preds_cv_presences, m_brt_preds_cv_absences, ktry = 10) # Apply sfbi function
   
@@ -291,10 +292,10 @@ m_brt_preds_cv_all_avg <- rowMeans(m_brt_preds_cv_all)
 # Calculate mean cross-validated prediction over all algorithms (create ensemble)
 # and assess performance measures
 m_ens_preds_cv <- rowMeans(data.frame(m_glm_preds_cv_all_avg, m_gam_preds_cv_all_avg, m_brt_preds_cv_all_avg, m_rf_preds_cv_all_avg))
-m_ens_perf_cv <- evalSDM(WNF_occ_env$occ, m_ens_preds_cv, weights = weights)
-presences <- which(WNF_occ_env$occ == 1)
+m_ens_perf_cv <- evalSDM(TBE_occ_env$occ, m_ens_preds_cv, weights = weights)
+presences <- which(TBE_occ_env$occ == 1)
 m_ens_preds_cv_presences <- m_ens_preds_cv[presences]
-absences <- which(WNF_occ_env$occ == 0)
+absences <- which(TBE_occ_env$occ == 0)
 m_ens_preds_cv_absences <- m_ens_preds_cv[absences]
 m_ens_boyce_cv <- sfbi(m_ens_preds_cv_presences, m_ens_preds_cv_absences, ktry = 10)
 boyce_index_m_ens <- m_ens_boyce_cv[6]
@@ -311,7 +312,9 @@ comp_perf <- data.frame(alg=rownames(comp_perf),comp_perf)
 save(m_glm_preds_cv_all, glm_performances, m_gam_preds_cv_all, gam_performances,
      m_rf_preds_cv_all, rf_performances, m_brt_preds_cv_all, brt_performances, 
      m_ens_preds_cv, m_ens_perf_cv, ks, comp_perf,
-     file = "output_data/validation/WNF_validation.RData")
+     file = "output_data/validation/TBE_validation.RData")
+
+
 
 
 
@@ -319,16 +322,13 @@ save(m_glm_preds_cv_all, glm_performances, m_gam_preds_cv_all, gam_performances,
 
 # 3. Monthly model performances ------------------------------------------------
 
-# Read in the needed data
-load("output_data/models/WNF_SDMs.RData") # The occurrence data frame
-load("output_data/validation/WNF_validation.RData") # The cross-validated ensemble predictions
 
 # Identify the earliest and latest month of observation
-start_month <- min(WNF_occ_env$month)
-end_month <- max(WNF_occ_env$month)
+start_month <- min(TBE_occ_env$month)
+end_month <- max(TBE_occ_env$month)
 
 
-# Create a vector containing the months of a year
+# Create a absence containing the months of a year
 month <- str_pad(paste0(start_month:end_month), width = 2, pad = "0")
 
 
@@ -337,10 +337,10 @@ for (m in month) { # Start of the loop over all months
   print(m)
   
   # Subset the occurrence data frame to only contain data of the respective month
-  WNF_occ_env_month <- subset(WNF_occ_env, WNF_occ_env$month == m)
+  TBE_occ_env_month <- subset(TBE_occ_env, TBE_occ_env$month == m)
   
   # Get the indices of the presences and absences of the respective month
-  monthly_data_indices <- which(WNF_occ_env$month == m)
+  monthly_data_indices <- which(TBE_occ_env$month == m)
   
   # Subset the cross-validated ensemble predictions by the extracted indices for that month
   monthly_data <- m_ens_preds_cv[monthly_data_indices]
@@ -349,12 +349,12 @@ for (m in month) { # Start of the loop over all months
   monthly_weights <- weights[monthly_data_indices]
   
   # Calculate the performance measures (AUC, TSS, Sensitivity, Specificity) for the respective month
-  m_ens_perf_cv_month <- evalSDM(WNF_occ_env_month$occ, monthly_data, weights = monthly_weights)
+  m_ens_perf_cv_month <- evalSDM(TBE_occ_env_month$occ, monthly_data, weights = monthly_weights)
   
   # Calculate the Boyce index with smoothing methods for the respective month
-  presences_month <- which(WNF_occ_env_month$occ == 1)
+  presences_month <- which(TBE_occ_env_month$occ == 1)
   m_ens_preds_cv_presences_month <- monthly_data[presences_month]
-  absences_month <- which(WNF_occ_env_month$occ == 0)
+  absences_month <- which(TBE_occ_env_month$occ == 0)
   m_ens_preds_cv_absences_month <- monthly_data[absences_month] 
   m_ens_boyce_cv_month  <- sfbi(m_ens_preds_cv_presences_month, m_ens_preds_cv_absences_month, ktry = 10) 
   boyce_index_m_ens_month <- m_ens_boyce_cv_month[6]
@@ -364,37 +364,42 @@ for (m in month) { # Start of the loop over all months
   
   
   # Save the data frame with performance measures
-  save(m_ens_perf_cv_month,  file = paste0("output_data/validation/WNF_monthly_validation_",m,".RData"))
+  save(m_ens_perf_cv_month,  file = paste0("output_data/validation/TBE_monthly_validation_",m,".RData"))
   
   
 } # Close the loop over all months
 
 
 
+
+
+
 #-------------------------------------------------------------------------------
 
-# 4. Create response curves of ensemble predictions ----------------------------
+# 4. Create partial response curves of ensemble predictions --------------------
 
-# Read in the needed data
-load("output_data/models/WNF_SDMs.RData") # The different models and selected predictor variables
 
-# Create a vector with all predictors within the models, soley the temperature
+# Create an empty data frame to store the ensemble predictions for partial response plots
+TBE_response_data <- data.frame(matrix(ncol = 4, nrow = 0))
+colnames(TBE_response_data) <- c("environmental_values", "predicted_values", "species", "predictor")
+
+# Create a absence with all predictors within the models, solely the temperature
 # variables, and the remaining variables that are used in all models
-my_preds_all <- c("tas", "tasmin", "tasmax", "cropland", "hurs", "pasture", "primary_forest", "secondary_forest", "pr", "urban", "pasture", "primary_openland", "rangeland", "C_pipiens")
+my_preds_all <- unique(unlist(my_preds_list))
 temp_var <- c("tas", "tasmin", "tasmax")
-remain_var <- c("cropland", "hurs", "pasture", "primary_forest", "secondary_forest", "pr", "urban", "pasture", "primary_openland", "rangeland", "C_pipiens")
+remain_var <- setdiff(my_preds_all, temp_var)
 
 
 
 for (p in my_preds_all) { # Loop through all predictor variables
   
-  # Name the other predictors in a vector
+  # Name the other predictors in a absence
   my_preds_minus_p <- setdiff(my_preds_all, p)
   
   # Create an environmental dummy dataset (keeping the other predictors at their mean)
-  dummy_data <- data.frame(seq(min(WNF_occ_env[,p], na.rm = TRUE), max(WNF_occ_env[,p], na.rm = TRUE), length = 100))
+  dummy_data <- data.frame(seq(min(TBE_occ_env[,p], na.rm = TRUE), max(TBE_occ_env[,p], na.rm = TRUE), length = 100))
   for (pred in my_preds_minus_p) {
-    dummy_data[[pred]] <- mean(WNF_occ_env[[pred]], na.rm = TRUE)
+    dummy_data[[pred]] <- mean(TBE_occ_env[[pred]], na.rm = TRUE)
   }
   
   names(dummy_data)[1] <- p
@@ -489,30 +494,35 @@ for (p in my_preds_all) { # Loop through all predictor variables
   } # Close if-condition
   
   # Prepare a data frame to plot response curves
-  plot_response <- data.frame(environmental_values = dummy_data[,p], predicted_values = ens_preds_p,
-                              sd = ens_sd_p)
+  plot_response <- data.frame(environmental_values = dummy_data[,p], predicted_values = ens_preds_p)
   
-  # Add bounds to the data frame
-  plot_response$upper_bound <- plot_response$predicted_values + plot_response$sd
-  plot_response$lower_bound <- plot_response$predicted_values - plot_response$sd
+  # Add species info to prediction data frame
+  plot_response$species <- "TBE"
+  
+  # Add predictor info to prediction data frame
+  plot_response$predictor <- p
+  
+  # Bind the predictions per variable to the comprehensive results data frame
+  TBE_response_data <- rbind(TBE_response_data, plot_response)
   
   
   # Plot the response curve
   ggplot(plot_response, aes(x = environmental_values, y = predicted_values)) +
-    geom_smooth(method = "lm", formula = y ~ x + I(x^2), color = "black", linewidth = 0.65, se = FALSE) +
-    # geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), color = "black", size = 0.65, se = FALSE) +
-    geom_ribbon(aes(ymin = predicted_values - sd, ymax = predicted_values + sd), 
-                fill = "grey24", alpha = 0.2) +
-    ylim(pmin(0, min(plot_response$lower_bound, na.rm = TRUE)), pmax(1, max(plot_response$upper_bound, na.rm = TRUE))) +
+    geom_line(color = "black", linewidth = 0.65) +
+    ylim(0,1) +
     xlim(min(plot_response$environmental_values), max(plot_response$environmental_values)) +
     labs(title = paste0(p), x = "Environmental values", y = "Predicted values") +
     theme_minimal() +
     theme(axis.title = element_text(size = 8), axis.text = element_text(size = 5))
   
-  ggsave(paste0("output_data/plots/response_curves/WNF_response_curve_smoothed_",p,".png"), width = 5, height = 5, units = "cm")
+  ggsave(paste0("output_data/plots/response_curves/TBE_partial_response_curve_",p,".png"), width = 5, height = 5, units = "cm")
+
   
   
 } # Close the loop over the different predictor variables
+
+# Save the data frame containing the ensemble predictions for partial response plots
+save(TBE_response_data, file = "output_data/validation/TBE_response_data.RData")
 
 
 
@@ -521,14 +531,16 @@ for (p in my_preds_all) { # Loop through all predictor variables
 
 # 5. Create scatterplot of cross-validated ensemble predictions ----------------
 
+# Create a vector caontaining all predictors
+my_preds_all <- unique(unlist(my_preds_list))
 
-my_preds_all <- c("tas", "tasmin", "tasmax", "cropland", "hurs", "pasture", "primary_forest", "secondary_forest", "pr", "urban", "pasture", "primary_openland", "rangeland", "C_pipiens")
-
-WNF_occ_env_scat <- WNF_occ_env
+# Rename datat frame containing the occurrence points and corresponding
+# environmental information
+TBE_occ_env_scat <- TBE_occ_env
 
 # Add the cross-validated ensemble predictions as column to the data frame containing 
 # the predictor values per presence/absence location
-WNF_occ_env_scat$ens_preds_cv <- m_ens_preds_cv
+TBE_occ_env_scat$ens_preds_cv <- m_ens_preds_cv
 
 
 for (p in my_preds_all) { # Loop through all predictor variables
@@ -536,16 +548,17 @@ for (p in my_preds_all) { # Loop through all predictor variables
   print(p)
   
   # Plot as scatterplot
-  ggplot(WNF_occ_env_scat, aes(x = WNF_occ_env_scat[,p], y = ens_preds_cv, color = factor(occ))) +
+  ggplot(TBE_occ_env_scat, aes(x = TBE_occ_env_scat[,p], y = ens_preds_cv, color = factor(occ))) +
     geom_point(alpha = 0.5, size = 0.005) + 
     geom_smooth(method = "loess", color = "black", se = FALSE, linewidth = 0.65) + 
-    scale_color_manual(values = c("firebrick4", "darkblue"), labels = c("Pseudo-Absence", "Presence")) +
+    scale_color_manual(values = c("firebrick4", "darkblue"), labels = c("Absence", "Presence")) +
     labs(title = paste0(p), x = "Environmental values", y = "CV Ensemble Predictions",
          color = "Occurrence") +
+    ylim(0,1) +
     theme_minimal()  +
     theme(axis.title = element_text(size = 8), axis.text = element_text(size = 5))
   
-  ggsave(paste0("output_data/plots/response_curves/WNF_response_scatterplot_",p,".png"), width = 10, height = 5, units = "cm")
+  ggsave(paste0("output_data/plots/response_curves/TBE_response_scatterplot_",p,".png"), width = 10, height = 5, units = "cm")
   
   
 } # Close the loop over predictors

@@ -24,7 +24,7 @@ C_pipiens_gbif <- read.delim("input_data/raw_species_data/Culex_pipiens_occurren
 
 #-------------------------------------------------------------------------------
 
-# 1. Download GBIF data --------------------------------------------------------
+# 1. Process raw GBIF data -----------------------------------------------------
 
 # GBIF data was downloaded with the following filters: Geometry: POLYGON((-31 34,40 34,40 72,-31 72,-31 34)),
 # Has Coordinate: TRUE, Scientific name: Culex pipiens, Year: between start of 1970 and end of 2019
@@ -57,16 +57,16 @@ C_pipiens_gbif$database <- "GBIF"
 
 #-------------------------------------------------------------------------------
 
-# 2. Downloaded VectorMap data -------------------------------------------------
+# 2. Process raw VectorMap data ------------------------------------------------
 
 # Remove rows that have no entry/NAs in their date columns
-I_ricinus_vectormap <- I_ricinus_vectormap %>%
+C_pipiens_vectormap <- C_pipiens_vectormap %>%
   filter(!is.na(EarliestDateCollected) & EarliestDateCollected != "",
          !is.na(LatestDateCollected) & LatestDateCollected != "")
 
 # Only keep occurrences where the columns "EarliestDateCollected" and
 # "LatestDateCollected" coincide in their year and month
-I_ricinus_vectormap <- I_ricinus_vectormap %>% 
+C_pipiens_vectormap <- C_pipiens_vectormap %>% 
   mutate(EarliestDateCollected = mdy_hms(EarliestDateCollected),
          LatestDateCollected = mdy_hms(LatestDateCollected),
          EarliestYearMonth = format(EarliestDateCollected, "%Y-%m"),

@@ -1,5 +1,5 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBEV)
+# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBE)
 
 #-------------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ I_ricinus_gbif <- read.delim("input_data/raw_species_data/Ixodes_ricinus_occurre
 
 #-------------------------------------------------------------------------------
 
-# 1. Downloaded GBIF data --------------------------------------------------------
+# 1. Process raw GBIF data -----------------------------------------------------
 
 # GBIF data was downloaded with the following filters: Geometry: POLYGON((-31 34,40 34,40 72,-31 72,-31 34)),
 # Has Coordinate: TRUE, Scientific name: Ixodes ricinus, Year: between start of 1970 and end of 2019
@@ -56,7 +56,7 @@ I_ricinus_gbif$database <- "GBIF"
 
 #-------------------------------------------------------------------------------
 
-# 2. Downloaded VectorMap data -------------------------------------------------
+# 2. Process raw VectorMap data ------------------------------------------------
 
 # Remove rows that have no entry/NAs in their date columns
 I_ricinus_vectormap <- I_ricinus_vectormap %>%
@@ -103,15 +103,14 @@ I_ricinus_vectormap$database <- "VectorMap"
 # Bind the occurrences from the two sources in one data frame
 I_ricinus_occurrences <- rbind(I_ricinus_gbif, I_ricinus_vectormap)
 
-# Clean coordinates for the monthly SDMs (keep occurrences with the same coordinates
+# Clean coordinates for the time-specific monthly SDMs (keep occurrences with the same coordinates
 # if recorded in different months)
 I_ricinus_occurrences_cleaned <- I_ricinus_occurrences %>%
   mutate_at(vars(lon, lat), round, 4) %>%  
   dplyr::filter(!(is.na(lat) | is.na(lon)), # only records with coordinates
                 !(lat == lon | lat == 0 | lon == 0), # coordinates should not be equal or zero
                 !is.na(month), # only records with specified month
-                #!(is.na(coordinate_uncertainty) | coordinate_uncertainty > 25000), # coordinate precision < 25000m  to still fall within cell (50km resolution)
-                (is.na(coordinate_uncertainty) | coordinate_uncertainty <= 25000),
+                !(is.na(coordinate_uncertainty) | coordinate_uncertainty > 25000), # coordinate precision < 25000m  to still fall within cell (50km resolution)
                 !(year < 1970 | year > 2019)) %>% # recent years
   distinct(lon, lat, month, year, .keep_all = TRUE) %>% # remove entries with duplicate coordinate records within the same month of the same year
   clean_coordinates(lon = "lon", lat = "lat", species = "species", countries = "country", 
@@ -132,6 +131,7 @@ I_ricinus_occurrences_cleaned <- I_ricinus_occurrences_cleaned %>%
 # Plot a map with the extent of Europe and plot all remaining points after cleaning
 maps::map('world',xlim=c(-31,40), ylim=c(34,72))
 points(I_ricinus_occurrences_cleaned$lon, I_ricinus_occurrences_cleaned$lat, col='goldenrod',  pch=19, cex = 0.5)
+
 
 
 

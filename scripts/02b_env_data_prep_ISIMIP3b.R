@@ -47,7 +47,7 @@ terra::writeRaster(europe_mask_50km, filename = "input_data/spatial_data/europe_
 
 # 2. Prepare future climate data -----------------------------------------------
 
-# CHELSA MPI-ESM1-2-HR
+# CHELSA MPI-ESM1-2-HR, GFDL-ESM4, IPSL-CM6A-LR, MRI-ESM2-0, UKESM1-0-LL
 # https://data.isimip.org/search/tree/ISIMIP3b/InputData/climate/atmosphere/mpi-esm1-2-hr/ -> configure download
 # bounding box: South: 34 North: 72 West: -31 East: 40
 # Extracted files from zip document
@@ -56,7 +56,8 @@ terra::writeRaster(europe_mask_50km, filename = "input_data/spatial_data/europe_
 
 # Load in all data of the climate variables (pr, tas, tasmax, tasmin, hurs) 
 # and calculate monthly averages (temperature, relative humidity) or monthly sums (precipitation)
-# for each future year and for three different climate forcing scenarios
+# for each future year and for three different climate forcing scenarios per
+# climate model
 
 # Prepare path to data folder
 datapath_Climate_data <- file.path("input_data/environmental_data/ISIMIP3b/Climate")
@@ -73,105 +74,120 @@ clim_variables <- c("pr", "tas", "tasmax", "tasmin", "hurs")
 # Create a vector containing the three different climate forcing scenarios
 clim_scenario <- c("ssp126", "ssp370", "ssp585")
 
+# Create a vector containing the different climate models
+clim_models <- c("gfdl-esm4", "ipsl-cm6a-lr", "mpi-esm1-2-hr", "mri-esm2-0", "ukesm1-0-ll")
+
 # Loop through the different year-month combination for each variable,
 # process climate data and write a raster for each year-month combination 
-# containing all four climate variables
+# containing all four climate variables (for 3 different climate scenarios
+# based on 5 different climate models)
 
 for (s in clim_scenario) { # Start of the loop over the three different climate forcing scenarios
   
   print(s)
   
-  for (y in years) { # Start of the loop over the different years
+  for (l in clim_models) { # Start the loop over the 5 different climate models
     
-    print(y)
+    print(l)
     
-    for (m in months) { # Start of the loop over the different months
+    for (y in years) { # Start of the loop over the different years
       
-      print(m)
+      print(y)
       
-      # Check if climate file was already processed for respective month and year
-      file_exists <- file.exists(paste0(datapath_Climate_data, "/",s,"/processed_data/Climate_future_data_",m,"_",y,"_",s,".tif"))
-      if (file_exists == FALSE) { # If file does not exist, start processing
+      for (m in months) { # Start of the loop over the different months
         
-        # Write a vector with the year-month combination
-        year_month_select <- paste(y, m, sep = "-")
+        print(m)
         
-        for (c in clim_variables) { # Start of the loop over the five different climate variables
+        # Check if climate file was already processed for respective month and year
+        file_exists <- file.exists(paste0(datapath_Climate_data, "/",s,"/processed_data/",l,"/Climate_future_data_",m,"_",y,"_",s,".tif"))
+        if (file_exists == FALSE) { # If file does not exist, start processing
           
-          print(c)
+          # Write a vector with the year-month combination
+          year_month_select <- paste(y, m, sep = "-")
           
-          # Load climate files that contain data for the years from 2030 to 2070
-          # for the respective variable
-          Climate_data_rasters_1 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/mpi-esm1-2-hr_r1i1p1f1_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2021_2030.nc"))
-          Climate_data_rasters_2 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/mpi-esm1-2-hr_r1i1p1f1_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2031_2040.nc"))
-          Climate_data_rasters_3 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/mpi-esm1-2-hr_r1i1p1f1_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2041_2050.nc"))
-          Climate_data_rasters_4 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/mpi-esm1-2-hr_r1i1p1f1_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2051_2060.nc"))
-          Climate_data_rasters_5 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/mpi-esm1-2-hr_r1i1p1f1_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2061_2070.nc"))
+          for (c in clim_variables) { # Start of the loop over the five different climate variables
+            
+            print(c)
+            
+            # Adapt the file name depending on the model
+            if (l %in% c("gfdl-esm4", "ipsl-cm6a-lr", "mpi-esm1-2-hr", "mri-esm2-0")) { v <- "r1i1p1f1"
+            } else if (l == "ukesm1-0-ll") { v <- "r1i1p1f2"
+            }
+            
+            # Load climate files that contain data for the years from 2030 to 2070
+            # for the respective variable
+            Climate_data_rasters_1 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/",l,"/",l,"_",v,"_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2021_2030.nc"))
+            Climate_data_rasters_2 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/",l,"/",l,"_",v,"_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2031_2040.nc"))
+            Climate_data_rasters_3 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/",l,"/",l,"_",v,"_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2041_2050.nc"))
+            Climate_data_rasters_4 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/",l,"/",l,"_",v,"_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2051_2060.nc"))
+            Climate_data_rasters_5 <- terra::rast(paste0(datapath_Climate_data, "/",s,"/raw_data/",l,"/",l,"_",v,"_w5e5_",s,"_",c,"_lat34.0to72.0lon-31.0to40.0_daily_2061_2070.nc"))
+            
+            # Stack all rasters
+            Climate_data_rasters <- c(Climate_data_rasters_1, Climate_data_rasters_2, Climate_data_rasters_3,
+                                      Climate_data_rasters_4, Climate_data_rasters_5)
+            
+            # Extract the time information from the rasters, starting from the year 2030
+            Climate_data_rasters_dates <- as.Date(time(Climate_data_rasters), origin = "2030-01-01")
+            
+            # Format these dates to only contain month and year
+            Climate_data_rasters_dates <- format(Climate_data_rasters_dates, "%Y-%m")
+            
+            # Extract daily rasters that correspond to that year-month combination
+            year_month_rasters <- which(Climate_data_rasters_dates == year_month_select)
+            year_month_rasters <- Climate_data_rasters[[year_month_rasters]]
+            
+            # Calculate mean values for corresponding month for temperature variables 
+            # and relative humidity variable, monthly sums for precipitation data 
+            # and adapt the unit of variable
+            if (c == "pr") { year_month_rasters_proc <- sum(year_month_rasters)
+            
+            # Precipitation is given in the unit kg m-2 s-1, calculate to kg m-2 month-1
+            days_month <- nlyr(year_month_rasters) # Extract the days of month by number of raster layers
+            seconds_month <- days_month * 24 * 3600 # Extract the number of seconds for the month
+            assign(paste0("year_month_rasters_processed_", c), year_month_rasters_proc * seconds_month) # Calculate new unit
+            
+            
+            } else if (c %in% c("tas", "tasmax", "tasmin")) { year_month_rasters_proc <- mean(year_month_rasters)
+            
+            # Temperature is given in the unit K, calculate to °C
+            assign(paste0("year_month_rasters_processed_", c), year_month_rasters_proc - 273.15) # Subtract 273.15 to get °C values
+            
+            
+            } else if (c == "hurs") { year_month_rasters_proc <- mean(year_month_rasters) # Relative humidity is given in %
+            
+            assign(paste0("year_month_rasters_processed_", c), year_month_rasters_proc)
+            
+            } # End of if-condition
+            
+            
+          } # Close the loop over all five climate variables
           
-          # Stack all rasters
-          Climate_data_rasters <- c(Climate_data_rasters_1, Climate_data_rasters_2, Climate_data_rasters_3,
-                                    Climate_data_rasters_4, Climate_data_rasters_5)
+          # Stack the climatic variables of the same year-month combination
+          Climate_rasters_processed <- c(year_month_rasters_processed_pr, year_month_rasters_processed_tas,
+                                         year_month_rasters_processed_tasmax, year_month_rasters_processed_tasmin,
+                                         year_month_rasters_processed_hurs)
           
-          # Extract the time information from the rasters, starting from the year 2030
-          Climate_data_rasters_dates <- as.Date(time(Climate_data_rasters), origin = "2030-01-01")
+          # Mask the values outside of the terrestrial continent of Europe (e.g. ocean area)
+          Climate_rasters_processed <- terra::mask(Climate_rasters_processed, europe_mask_50km)
           
-          # Format these dates to only contain month and year
-          Climate_data_rasters_dates <- format(Climate_data_rasters_dates, "%Y-%m")
+          # Add names to the raster layers
+          names(Climate_rasters_processed) <- c("pr", "tas", "tasmax", "tasmin", "hurs")
           
-          # Extract daily rasters that correspond to that year-month combination
-          year_month_rasters <- which(Climate_data_rasters_dates == year_month_select)
-          year_month_rasters <- Climate_data_rasters[[year_month_rasters]]
-          
-          # Calculate mean values for corresponding month for temperature variables 
-          # and relative humidity variable, monthly sums for precipitation data 
-          # and adapt the unit of variable
-          if (c == "pr") { year_month_rasters_proc <- sum(year_month_rasters)
-          
-          # Precipitation is given in the unit kg m-2 s-1, calculate to kg m-2 month-1
-          days_month <- nlyr(year_month_rasters) # Extract the days of month by number of raster layers
-          seconds_month <- days_month * 24 * 3600 # Extract the number of seconds for the month
-          assign(paste0("year_month_rasters_processed_", c), year_month_rasters_proc * seconds_month) # Calculate new unit
+          # Save the processed raster as tif file
+          terra::writeRaster(Climate_rasters_processed, filename = paste0(datapath_Climate_data, "/",s,"/processed_data/",l,"/Climate_future_data_",m,"_",y,"_",s,".tif"), overwrite = TRUE)
           
           
-          } else if (c %in% c("tas", "tasmax", "tasmin")) { year_month_rasters_proc <- mean(year_month_rasters)
           
-          # Temperature is given in the unit K, calculate to °C
-          assign(paste0("year_month_rasters_processed_", c), year_month_rasters_proc - 273.15) # Subtract 273.15 to get °C values
-          
-          
-          } else if (c == "hurs") { year_month_rasters_proc <- mean(year_month_rasters) # Relative humidity is given in %
-          
-          assign(paste0("year_month_rasters_processed_", c), year_month_rasters_proc)
-          
-          } # End of if-condition
-          
-          
-        } # Close the loop over all five climate variables
+        } else if (file_exists == TRUE) { print("already done") # If file already exists, start with next month
+        } # Close if condition
         
-        # Stack the climatic variables of the same year-month combination
-        Climate_rasters_processed <- c(year_month_rasters_processed_pr, year_month_rasters_processed_tas,
-                                       year_month_rasters_processed_tasmax, year_month_rasters_processed_tasmin,
-                                       year_month_rasters_processed_hurs)
-        
-        # Mask the values outside of the terrestrial continent of Europe (e.g. ocean area)
-        Climate_rasters_processed <- terra::mask(Climate_rasters_processed, europe_mask_50km)
-        
-        # Add names to the raster layers
-        names(Climate_rasters_processed) <- c("pr", "tas", "tasmax", "tasmin", "hurs")
-        
-        # Save the processed raster as tif file
-        terra::writeRaster(Climate_rasters_processed, filename = paste0(datapath_Climate_data, "/",s,"/processed_data/Climate_future_data_",m,"_",y,"_",s,".tif"), overwrite = TRUE)
         
         
-        
-      } else if (file_exists == TRUE) { print("already done") # If file already exists, start with next month
-      } # Close if condition
+      } # Close the loop over all months of a year
       
-      
-      
-    } # Close the loop over all months of a year
+    } # Close the loop over all years
     
-  } # Close the loop over all years
+  } # Close the loop over the 5 different climate models
   
   
 } # Close of the loop over the climate forcing scenarios

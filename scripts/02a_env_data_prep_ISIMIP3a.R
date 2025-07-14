@@ -308,7 +308,7 @@ for (y in years) { # Start of the loop over the different years
 
 #-------------------------------------------------------------------------------
 
-# 4. Prepare land use data -----------------------------------------------------
+# 4. Prepare historical land use data ------------------------------------------
   
 
 # Prepare path to data folder
@@ -458,4 +458,160 @@ for (y in years) { # Start of the loop over the years of interest
   } # Close if condition
   
 } # End of the loop over all years of interest
+
+
+
+
+#-------------------------------------------------------------------------------
+
+# 5. Prepare counterfactual land use data --------------------------------------
+
+# Prepare path to data folder
+datapath_LandUse_data <- file.path("input_data/environmental_data/ISIMIP3a/CounterLandUse") 
+
+# Create a vector containing the years of interest
+years <- 1970:2019
+
+# Load in yearly land use data
+LandUse_data_rasters_crops <- terra::rast(paste0(datapath_LandUse_data, "/raw_data/landuse-5crops_1901soc_annual_1901_2021.nc"))
+LandUse_data_rasters_fornatveg <- terra::rast(paste0(datapath_LandUse_data, "/raw_data/landuse-forests-and-natural-vegetation_1901soc_annual_1901_2021.nc"))
+LandUse_data_rasters_pastures <- terra::rast(paste0(datapath_LandUse_data, "/raw_data/landuse-pastures_1901soc_annual_1901_2021.nc"))
+LandUse_data_rasters_urban <- terra::rast(paste0(datapath_LandUse_data, "/raw_data/landuse-urbanareas_1901soc_annual_1901_2021.nc"))
+
+# Extract the rasters for each variable of interest
+print("forested primary land")
+LandUse_data_rasters_primf <- LandUse_data_rasters_fornatveg[[grep("primary_forests", names(LandUse_data_rasters_fornatveg))]]
+
+print("non-forested primary land")
+LandUse_data_rasters_primn <- LandUse_data_rasters_fornatveg[[grep("primary_nonforests", names(LandUse_data_rasters_fornatveg))]]
+
+print("potentially forested secondary land")
+LandUse_data_rasters_secdf <- LandUse_data_rasters_fornatveg[[grep("secondary_forests", names(LandUse_data_rasters_fornatveg))]]
+
+print("potentially non-forested secondary land")
+LandUse_data_rasters_secdn <- LandUse_data_rasters_fornatveg[[grep("secondary_nonforests", names(LandUse_data_rasters_fornatveg))]]
+
+print("managed pasture")
+LandUse_data_rasters_pastr <- LandUse_data_rasters_pastures[[grep("managed_pastures", names(LandUse_data_rasters_pastures))]]
+
+print("rangeland")
+LandUse_data_rasters_range <- LandUse_data_rasters_pastures[[grep("rangeland", names(LandUse_data_rasters_pastures))]]
+
+print("C3 annual crops")
+LandUse_data_rasters_crop1 <- LandUse_data_rasters_crops[[grep("c3ann_(irrigated|rainfed)", names(LandUse_data_rasters_crops))]]
+
+print("C4 annual crops")
+LandUse_data_rasters_crop2 <- LandUse_data_rasters_crops[[grep("c4ann_(irrigated|rainfed)", names(LandUse_data_rasters_crops))]]
+
+print("C3 perennial crops")
+LandUse_data_rasters_crop3 <- LandUse_data_rasters_crops[[grep("c3per_(irrigated|rainfed)", names(LandUse_data_rasters_crops))]]
+
+print("C4 perennial crops")
+LandUse_data_rasters_crop4 <- LandUse_data_rasters_crops[[grep("c4per_(irrigated|rainfed)", names(LandUse_data_rasters_crops))]]
+
+print("C3 nitrogen-fixing crops")
+LandUse_data_rasters_crop5 <- LandUse_data_rasters_crops[[grep("c3nfx_(irrigated|rainfed)", names(LandUse_data_rasters_crops))]]
+
+
+for (y in years) { # Start of the loop over the years of interest
+  
+  print(y)
+  
+  # Check if land use file was already processed for respective year
+  file_exists <- file.exists(paste0(datapath_LandUse_data, "/processed_data/LandUse_data_",y,".tif"))
+  if (file_exists == FALSE) { # If file does not exist, start processing
+    
+    # Extract the raster of the respective year for each land use variable,
+    # crop it to the European extent and mask it to the terrestrial European
+    # area
+    print("forested primary land")
+    LandUse_data_raster_primf_year <- LandUse_data_rasters_primf[[grep(y, time(LandUse_data_rasters_primf))]]
+    LandUse_data_raster_primf_year <- terra::resample(LandUse_data_raster_primf_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_primf_year <- terra::mask(LandUse_data_raster_primf_year, europe_mask_50km)
+    
+    print("non-forested primary land")
+    LandUse_data_raster_primn_year <- LandUse_data_rasters_primn[[grep(y, time(LandUse_data_rasters_primn))]]
+    LandUse_data_raster_primn_year <- terra::resample(LandUse_data_raster_primn_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_primn_year <- terra::mask(LandUse_data_raster_primn_year, europe_mask_50km)
+    
+    print("potentially forested secondary land")
+    LandUse_data_raster_secdf_year <- LandUse_data_rasters_secdf[[grep(y, time(LandUse_data_rasters_secdf))]]
+    LandUse_data_raster_secdf_year <- terra::resample(LandUse_data_raster_secdf_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_secdf_year <- terra::mask(LandUse_data_raster_secdf_year, europe_mask_50km)
+    
+    print("potentially non-forested secondary land")
+    LandUse_data_raster_secdn_year <- LandUse_data_rasters_secdn[[grep(y, time(LandUse_data_rasters_secdn))]]
+    LandUse_data_raster_secdn_year <- terra::resample(LandUse_data_raster_secdn_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_secdn_year <- terra::mask(LandUse_data_raster_secdn_year, europe_mask_50km)
+    
+    print("managed pasture")
+    LandUse_data_raster_pastr_year <- LandUse_data_rasters_pastr[[grep(y, time(LandUse_data_rasters_pastr))]]
+    LandUse_data_raster_pastr_year <- terra::resample(LandUse_data_raster_pastr_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_pastr_year <- terra::mask(LandUse_data_raster_pastr_year, europe_mask_50km)
+    
+    print("rangeland")
+    LandUse_data_raster_range_year <- LandUse_data_rasters_range[[grep(y, time(LandUse_data_rasters_range))]]
+    LandUse_data_raster_range_year <- terra::resample(LandUse_data_raster_range_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_range_year <- terra::mask(LandUse_data_raster_range_year, europe_mask_50km)
+    
+    print("C3 annual crops")
+    LandUse_data_raster_crop1_year <- LandUse_data_rasters_crop1[[grep(y, time(LandUse_data_rasters_crop1))]]
+    LandUse_data_raster_crop1_year <- terra::resample(LandUse_data_raster_crop1_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_crop1_year <- terra::mask(LandUse_data_raster_crop1_year, europe_mask_50km)
+    LandUse_data_raster_crop1_year <- LandUse_data_raster_crop1_year[[1]] + LandUse_data_raster_crop1_year[[2]]
+    
+    print("C4 annual crops")
+    LandUse_data_raster_crop2_year <- LandUse_data_rasters_crop2[[grep(y, time(LandUse_data_rasters_crop2))]]
+    LandUse_data_raster_crop2_year <- terra::resample(LandUse_data_raster_crop2_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_crop2_year <- terra::mask(LandUse_data_raster_crop2_year, europe_mask_50km)
+    LandUse_data_raster_crop2_year <- LandUse_data_raster_crop2_year[[1]] + LandUse_data_raster_crop2_year[[2]]
+    
+    print("C3 perennial crops")
+    LandUse_data_raster_crop3_year <- LandUse_data_rasters_crop3[[grep(y, time(LandUse_data_rasters_crop3))]]
+    LandUse_data_raster_crop3_year <- terra::resample(LandUse_data_raster_crop3_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_crop3_year <- terra::mask(LandUse_data_raster_crop3_year, europe_mask_50km)
+    LandUse_data_raster_crop3_year <- LandUse_data_raster_crop3_year[[1]] + LandUse_data_raster_crop3_year[[2]]
+    
+    print("C4 perennial crops")
+    LandUse_data_raster_crop4_year <- LandUse_data_rasters_crop4[[grep(y, time(LandUse_data_rasters_crop4))]]
+    LandUse_data_raster_crop4_year <- terra::resample(LandUse_data_raster_crop4_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_crop4_year <- terra::mask(LandUse_data_raster_crop4_year, europe_mask_50km)
+    LandUse_data_raster_crop4_year <- LandUse_data_raster_crop4_year[[1]] + LandUse_data_raster_crop4_year[[2]]
+    
+    print("C3 nitrogen-fixing crops")
+    LandUse_data_raster_crop5_year <- LandUse_data_rasters_crop5[[grep(y, time(LandUse_data_rasters_crop5))]]
+    LandUse_data_raster_crop5_year <- terra::resample(LandUse_data_raster_crop5_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_crop5_year <- terra::mask(LandUse_data_raster_crop5_year, europe_mask_50km)
+    LandUse_data_raster_crop5_year <- LandUse_data_raster_crop5_year[[1]] + LandUse_data_raster_crop5_year[[2]]
+    
+    print("urban land")
+    LandUse_data_raster_urban_year <- LandUse_data_rasters_urban[[grep(y, time(LandUse_data_rasters_urban))]]
+    LandUse_data_raster_urban_year <- terra::resample(LandUse_data_raster_urban_year, europe_mask_50km, method = "bilinear")
+    LandUse_data_raster_urban_year <- terra::mask(LandUse_data_raster_urban_year, europe_mask_50km)
+    
+    
+    # Summarize variable types (cropland)
+    LandUse_data_cropland <- sum(LandUse_data_raster_crop1_year, LandUse_data_raster_crop2_year, 
+                                 LandUse_data_raster_crop3_year, LandUse_data_raster_crop4_year,
+                                 LandUse_data_raster_crop5_year)
+    
+    # Stack the raster files for the respective year
+    LandUse_rasters_processed <- c(LandUse_data_raster_primf_year, LandUse_data_raster_primn_year,
+                                   LandUse_data_raster_secdf_year, LandUse_data_raster_secdn_year,
+                                   LandUse_data_raster_pastr_year, LandUse_data_raster_range_year,
+                                   LandUse_data_cropland, LandUse_data_raster_urban_year) 
+    
+    # Add names to the raster layers
+    names(LandUse_rasters_processed) <- c("primary_forest", "primary_openland", "secondary_forest", "secondary_openland",
+                                          "pasture", "rangeland", "cropland", "urban")
+    
+    # Save the processed raster files
+    terra::writeRaster(LandUse_rasters_processed, filename = paste0(datapath_LandUse_data, "/processed_data/CounterLandUse_data_",y,".tif"), overwrite = TRUE)
+    
+    
+  } else if (file_exists == TRUE) { print("already done") # If file already exists, start with next month
+  } # Close if condition
+  
+} # End of the loop over all years of interest
+
 

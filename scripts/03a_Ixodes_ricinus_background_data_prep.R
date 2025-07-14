@@ -1,5 +1,5 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBEV)
+# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBE)
 
 #-------------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ end_date <- as.Date("2019-12-01") # Define end date
 date_sequence_month <- seq.Date(from = start_date, to = end_date, by = "month") # create a monthly sequence
 date_sequence <- format(date_sequence_month, "%m/%Y") # Extract year and month from dates
 
-# Read in the background mask of Europe in the respective resolution
+# Read in the background mask of Europe (50 km resolution)
 europe_mask <- terra::rast(paste0("input_data/spatial_data/europe_mask_50km.tif"))
 
 # Load cleaned occurrence data
@@ -107,7 +107,7 @@ for (d in date_sequence) { # Start of the loop over all dates
       # set raster cells outside the buffer to NA
       buf_150 <- terra::mask(europe_mask, buf_150, overwrite = TRUE)
       
-      # randomly select background data within the buffer, excluding presence locations (sampling 10x as many background points as presences)
+      # randomly select background data within the buffer, excluding presence locations (aiming to sample 10x as many background points as presences)
       occ_cells_150 <- terra::extract(buf_150, occ_coords, cells = TRUE)[,"cell"]
       buf_cells_150 <- terra::extract(buf_150, crds(buf_150), cells = TRUE)[,"cell"]
       diff_cells_150 <- setdiff(buf_cells_150, occ_cells_150)
@@ -201,7 +201,7 @@ for (d in date_sequence) { # Start of the loop over all dates
 } # End of loop over dates
 
 # Get a summary of presence and background data numbers
-table(I_ricinus_occ_env$occ) # 0: 15650; 1: 2114
+table(I_ricinus_occ_env$occ) # 0: 15549; 1: 2114
 print(table(I_ricinus_occ_env$month[I_ricinus_occ_env$occ == 1]))
 
 # Save the resulting data frame, containing thinned presence and background data,
@@ -211,11 +211,18 @@ save(I_ricinus_occ_env, file = "output_data/data/I_ricinus_occ_env.RData")
   
 
 
+#-------------------------------------------------------------------------------
+
+# 5. Occurrence mapping --------------------------------------------------------
+
 
 # Map the thinned presences and background data
-# library(maps)
+png("output_data/plots/presence_background/I_ricinus_presence_pseudoabsence.png", width = 2000, height = 2000, res = 300)
+
+
 maps::map('world',xlim=c(-31,40), ylim=c(34,72))
 points(I_ricinus_occ_env$lon[I_ricinus_occ_env$occ == 0], I_ricinus_occ_env$lat[I_ricinus_occ_env$occ == 0], col='steelblue4',  pch=19, cex = 0.5)
 points(I_ricinus_occ_env$lon[I_ricinus_occ_env$occ == 1], I_ricinus_occ_env$lat[I_ricinus_occ_env$occ == 1], col='goldenrod',  pch=19, cex = 0.5)
+legend(title = "Ixodes ricinus:", x = -25, y = 50, legend = c("Pseudoabsence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
 
-       
+dev.off()

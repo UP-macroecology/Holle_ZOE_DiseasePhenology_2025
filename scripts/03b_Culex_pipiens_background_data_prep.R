@@ -28,7 +28,7 @@ end_date <- as.Date("2019-12-01") # Define end date (end of monthly climate data
 date_sequence_month <- seq.Date(from = start_date, to = end_date, by = "month") # create a monthly sequence
 date_sequence <- format(date_sequence_month, "%m/%Y") # Extract year and month from dates
 
-# Read in the background mask of Europe in the respective resolution
+# Read in the background mask of Europe (50 km resolution)
 europe_mask <- terra::rast(paste0("input_data/spatial_data/europe_mask_50km.tif"))
 
 # Load cleaned occurrence data
@@ -108,7 +108,7 @@ for (d in date_sequence) { # Start of the loop over all dates
       # set raster cells outside the buffer to NA
       buf_100 <- terra::mask(europe_mask, buf_100, overwrite = TRUE)
       
-      # randomly select background data within the buffer, excluding presence locations (sampling 10x as many background points as presences)
+      # randomly select background data within the buffer, excluding presence locations (aiming to sample 10x as many background points as presences)
       occ_cells_100 <- terra::extract(buf_100, occ_coords, cells = TRUE)[,"cell"]
       buf_cells_100 <- terra::extract(buf_100, crds(buf_100), cells = TRUE)[,"cell"]
       diff_cells_100 <- setdiff(buf_cells_100, occ_cells_100)
@@ -163,9 +163,9 @@ for (d in date_sequence) { # Start of the loop over all dates
       
       
       
-      #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
       
-      # 4. Join with environmental data  ---------------------------------------------
+# 4. Join with environmental data  ---------------------------------------------
       
       print("matching env. data")
       
@@ -206,7 +206,7 @@ for (d in date_sequence) { # Start of the loop over all dates
 
 
 # Get a summary of presence and background data numbers
-print(table(C_pipiens_occ_env$occ)) # 1: 1047; 2: 5853
+print(table(C_pipiens_occ_env$occ)) # 1: 1047; 2: 5831
 print(table(C_pipiens_occ_env$month[C_pipiens_occ_env$occ == 1]))
 
 # Save the resulting data frame, containing thinned presence and background data,
@@ -215,7 +215,17 @@ save(C_pipiens_occ_env, file = "output_data/data/C_pipiens_occ_env.RData")
 
 
 
+#-------------------------------------------------------------------------------
+
+# 5. Occurrence mapping --------------------------------------------------------
+
 # Map the thinned presences and background data
+png("output_data/plots/presence_background/C_pipiens_presence_pseudoabsence.png", width = 2000, height = 2000, res = 300)
+
+
 maps::map('world',xlim=c(-31,40), ylim=c(34,72))
 points(C_pipiens_occ_env$lon[C_pipiens_occ_env$occ == 0], C_pipiens_occ_env$lat[C_pipiens_occ_env$occ == 0], col='steelblue4',  pch=19, cex = 0.5)
 points(C_pipiens_occ_env$lon[C_pipiens_occ_env$occ == 1], C_pipiens_occ_env$lat[C_pipiens_occ_env$occ == 1], col='goldenrod',  pch=19, cex = 0.5)
+legend(title = "Culex pipiens:", x = -25, y = 50, legend = c("Pseudoabsence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
+
+dev.off()

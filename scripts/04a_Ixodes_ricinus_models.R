@@ -53,7 +53,7 @@ my_preds <- var_sel$pred_sel
 
 # Create a list with three different vectors combining the three different 
 # temperature variables (tas, tasmin, tasmax) separately with the selected 
-# variables
+# variables (creating three different predictor sets)
 my_preds_list <- list(tas_mypreds = c(my_preds, "tas"), tasmin_mypreds = c(my_preds, "tasmin"),
                       tasmax_mypreds = c(my_preds, "tasmax"))
 
@@ -73,6 +73,7 @@ I_ricinus_occ_env$abs_index[I_ricinus_occ_env$occ!=1] <- sample(1:background_pre
 # 2. Model fitting -------------------------------------------------------------
 
 # Fit GLM (including linear and quadratic terms, AIC-based stepwise variable selection, equal weights)
+# for all three predictor sets
 print("GLM")
 
 # Create a list to store the models
@@ -94,7 +95,7 @@ names(models_glm) <- sapply(my_preds_list, paste, collapse = "+")
 
 
 
-# Fit GAM (cubic smoothing splines, equal weights)
+# Fit GAM (cubic smoothing splines, equal weights) for all three predictor sets
 print("GAM")
 
 # Create a list to store the models
@@ -116,7 +117,8 @@ names(models_gam) <- sapply(my_preds_list, paste, collapse = "+")
 
 
 
-# Fit RF (same number of presences and background data, ten models in total)
+# Fit RF (same number of presences and background data, n models in total depending on the background-presence ratio)
+# for all three predictor sets
 print("RF")
 
 models_rf <- list()
@@ -135,7 +137,8 @@ for (m in seq_along(my_preds_list)) { # Start the loop over the three different 
   
 
 
-# Fit BRT (same number of presences and background data, ten models in total, adaptable learning rate to fit model with 1000 and 10000 trees)
+# Fit BRT (same number of presences and background data, n models in total depending on the background-presence ratio, 
+# adaptable learning rate to fit model with 1000 and 5000 trees) for all three predictor sets
 print("BRT")
 
 models_brt <- list()
@@ -148,7 +151,7 @@ for (m in seq_along(my_preds_list)) { # Start the loop over the three different 
   m_brt = lapply(1:background_presence_ratio, FUN=function(i) {
     print(i);
     opt.LR <- TRUE;
-    LR = 0.008;
+    LR = 0.01;
     while(opt.LR){
       m.brt <- try(gbm.step(data = I_ricinus_occ_env[c(presences, which(I_ricinus_occ_env$abs_index == i)),], gbm.x = my_preds, gbm.y = "occ", family = 'bernoulli', tree.complexity = 2, bag.fraction = 0.75, learning.rate = LR, verbose=F, plot.main=F))
       if (class(m.brt) == "try-error" | class(m.brt) == "NULL"){
@@ -157,7 +160,7 @@ for (m in seq_along(my_preds_list)) { # Start the loop over the three different 
         if(m.brt$gbm.call$best.trees<1000){
           LR <- LR/2
         } else 
-          if(m.brt$gbm.call$best.trees>10000){
+          if(m.brt$gbm.call$best.trees>5000){
             LR <- LR*2
           } else { 
             opt.LR <- FALSE}}; 
