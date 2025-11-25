@@ -1,37 +1,233 @@
-# Working title: Historical and Future Disease Phenologies of TBE and WNV in Europe
+# Working title: Past and future phenology changes of zoonotic vector-borne diseases under climate and land use change
 
 ### RESEARCH AIM: 
 The analysis is part of the EU-funded project [ZOE (Zoonoses Emergence across Degraded and Restored Forest Ecosystems)](https://www.zoe-project.eu), which investigates the relationship between ecosystem degradation, biodiversity loss, and the associated risk of zoonotic disease emergence. As contributors to Work Package 5 of the project, our goal is to analyse how distinct seasonal emergence patterns of arthropod species can significantly impact disease transmission risks in Europe. Using a spatiotemporal modelling framework, we aim to understand how climate warming and land use changes, as well as interannual variation, can alter disease occurrence in space and time, the timing of peak infection risk and the duration of transmission season by affecting vector and virus distribution. Understanding these trends is crucial for effectively managing disease risks and implementing appropriate public health measures. 
 
 This repository contains the R scripts needed to reproduce all results and plots.
 
-## Workflow
-### 00 - Data setup
-We list the needed functions.
 
-### 01 - Species and infection data preparation
-We process raw species (*Ixodes ricinus*, *Culex pipiens*) and infection (TBEV, WNV) data to obtain a target spatial resolution of 50 km and a target temporal resolution of one month. 
+
+---------------------------------------------------------------
+**Workflow**
+---------------------------------------------------------------
+
+We detail all data preparation and modelling steps following the [ODMAP protocol].
+
+### 00 - Setup
+scripts [folder setup] and [functions]
+
+We create all necessary directories for the project and list the needed functions.
+
+
+### 01 - Species data preparation
+scripts [01a], [01b]
+
+We process the raw species occurrence data for *Ixodes ricinus* and *Culex pipiens* ([GBIF](https://www.gbif.org), [VectorMap](https://experience.arcgis.com/experience/5f95c3edfbea4634b8347fec0bd1dcd6)) by removing records with erroneous timestamps or coordinates and excluding duplicate records within the same calendar month of a given year. This ensures a clean dataset with a target temporal resolution of one month.
+
 
 ### 02 - Environmental data preparation
-We process [ISIMIP3 (Inter-Sectoral Impact Model Intercomparison Project Phase 3)](https://www.isimip.org/protocol/3/) climate and land-use data, including historical simulations (ISIMIP3a) and future projections (ISIMIP3b). The climate data is provided as daily outputs at a 50 km resolution, matching the spatial resolution of the species and infection data. To additionally align with our target temporal resolution, we aggregate the daily temperature and humidity outputs into monthly mean values and daily precipitation outputs into monthly totals. Additionally, yearly land-use data at a spatial resolution of 50 km is aggregated into eight distinct land-use categories for each year.
+scripts [02a], [2b]
+
+We process [ISIMIP3 (Inter-Sectoral Impact Model Intercomparison Project Phase 3)](https://www.isimip.org/protocol/3/) climate and land-use data, including historical simulations (ISIMIP3a) and future projections (ISIMIP3b). The climate data are provided as daily outputs at a 0.5° resolution. To match our target temporal resolution, daily temperature and humidity outputs are aggregated into monthly mean values, and daily precipitation outputs into monthly totals. Yearly historical land-use data at a 0.5° resolution are summarised into eight distinct land-use categories per year. Future land-use data are provided by [LUH2 (Land Use Harmonization 2)](https://luh.umd.edu/data.shtml) at 0.25° resolution; these rasters are aggregated by a factor of 2 to achieve a 0.5° spatial resolution and similarly summarised into the eight distinct land-use categories for each year.
+
 
 ### 03 - Species background data generation
-We generate background data for our vector species *Ixodes ricinus* and *Culex pipiens* by randomly selecting locations within a specified buffer distance from the presence points using a presence-background ratio of 1:10, excluding cells containing the actual presence locations. This process is conducted separately based on occurrences within the same month of a given year, resulting in temporally matched background data. To avoid spatial autocorrelation, we thin both the monthly presence and background data of the species using a 100 km threshold. Finally, we match the species data - comprising both presence and background data - with the month- and year-specific climate predictors, as well as year-specific land-use predictors.
+scripts [03a], [03b]
+
+We generate background data for our vector species *Ixodes ricinus* and *Culex pipiens* by randomly selecting locations within a specified buffer distance around the presence points, aiming for a presence-to-background ratio of 1:10, while excluding cells containing the actual presence records. This procedure is conducted separately based on occurrences within the same month of a given year, resulting in temporally matched background data. To reduce spatial autocorrelation, we thin both the monthly presence and background data of the species using a 50 km threshold. Finally, we match the species data - comprising both presence and background data - with the month- and year-specific climate predictors, as well as year-specific land-use predictors.
+
 
 ### 04 - Species model fitting
-For the species *Ixodes ricinus* and *Culex pipiens*, we identify the most important and weakly correlated predictor variables to include in model construction. Models are built using four different algorithms: Generalised Linear Model (GLM), Generalised Additive Model (GAM), Random Forest (RF), and Boosted Regression Tree (BRT). 
+scripts [04a], [04b]
+
+For the species *Ixodes ricinus* and *Culex pipiens*, we identify the most important and weakly correlated predictor variables to include in the SDM construction. Spatiotemporal models are built using four different algorithms: Generalised Linear Model (GLM), Generalised Additive Model (GAM), Random Forest (RF), and Boosted Regression Tree (BRT). 
+
 
 ### 05 - Species model validation
+scripts [05a], [05b]
+
 We evaluate the model performance of all algorithms for *Ixodes ricinus* and *Culex pipiens* using a 5-fold cross-validation approach, focusing on performance metrics such as AUC and the Boyce index. To further assess the ensemble model, we calculate the average of the continuous cross-validated predictions. Additionally, we extract monthly performance measures and generate plots of response curves for each predictor variable.  
 
-### 06 - Species model predictions
-We generate continuous ensemble predictions for historical time periods under various environmental scenarios (observed climate and land use change, observed land use change and detrended climate, observed climate change and no land use). For future time periods, we consider different environmental scenarios (projected climate and land use change, projected climate change and steady land use, projected climate change and no land use) and forcings (ssp126, ssp370, ssp585).
 
-### 07 - Infection background data generation
-We generate background data for the human-case infection data of TBEV and WNV by sampling cell locations where the main vector species were present, but the disease itself was absent. These background points are created separately based on disease and vector occurrences within the same month of a given year to ensure alignment with our temporal resolution. After thinning the infection data using a 100 km threshold for each month, we match the time-specific infection data with the corresponding environmental data. Since the pathogen distribution depends on the presence of their vector species, we include the predicted monthly occurrence probability of the main vector species as an environmental predictor variable, following a nested modelling approach.
+### 06 - Species model predictions
+scripts [06a], [06b]
+
+We generate continuous ensemble predictions for historical time periods (1970-2019) using both observed and counterfactual environmental data, allowing us to attribute changes in predictions to climate and land-use factors. For future time periods (2030-2059), we incorporate different environmental forcing scenarios (ssp126, ssp370, ssp585) and, for climate, consider projections from five distinct climate models.
+
+
+### 07 - Virus data preparation
+scripts [07a], [07b]
+
+We process locally acquired, confirmed human TBE and WNV cases in Europe, reported at the NUTS3 level (provided by [TESSy/ECDC](https://atlas.ecdc.europa.eu/public/index.aspx)) to generate spatially explicit infection data.
+
+
+### 08 - Virus absence data generation
+scripts [08a], [08b]
+
+We generate absence data for the human TBE and WNV infection cases by drawing points from all cells within NUTS3 municipalities in EU/EEA countries with a mandatory surveillance system, selecting only cells where no infections had been reported to the ECDC. Because the set of EU/EEA countries with mandatory reporting changed over time, we adjust the list of eligible countries for each year based on information from the [corresponding Annual Epidemiological Reports](https://www.ecdc.europa.eu/en/publications-data/monitoring/all-annual-epidemiological-reports). To ensure consistency with our temporal resolution, absence points were generated separately from occurrences within the same month of a given year. To minimise spatial autocorrelation, a 50 km thinning threshold was applied to both the monthly infection presence data and the corresponding absence data. Because pathogen distribution depends on the presence of their vector species, we include, in addition to climate variables, the predicted occurrence probability of the main vector species as a predictor variable, following a nested modelling approach. 
+
+
+### 09 - Virus model fitting
+scripts [09a], [09b]
+
+For the target viruses, we create a balanced dataset of thinned presence and absence points. We then identify the most important and weakly correlated predictor variables to include in the SDM construction. Spatiotemporal models are built using four different algorithms: Generalised Linear Model (GLM), Generalised Additive Model (GAM), Random Forest (RF), and Boosted Regression Tree (BRT). 
+
+
+### 10 - Virus model validation
+scripts [10a], [10b]
+
+We evaluate the model performance of all algorithms for TBE and WNV using a 5-fold cross-validation approach, focusing on performance metrics such as AUC and the Boyce index. To further assess the ensemble model, we calculate the average of the continuous cross-validated predictions. Monthly performance measures are extracted and response curves are generated for each predictor variable. Finally, we create a combined plot showing the partial response curves for both the target vectors and the associated viruses.
+
+
+### 11 - Virus model predictions
+scripts [11a], [11b]
+
+We generate continuous ensemble predictions for historical time periods (1970-2019) using both observed and counterfactual environmental data, allowing us to attribute changes in predictions. For future time periods (2030-2059), we incorporate different environmental forcing scenarios (ssp126, ssp370, ssp585) based five distinct climate models. Although land-use variables were not directly included in the virus models, the effects of land-use change were implicitly accounted for through the incorporation of the corresponding habitat suitability predictions of the main vector species.
+
+
+## 12 - Vector and virus prediction postprocessing
+
+
+### XX - General overview
 
 ### XX - Decadal occurrence probability trends
 
-### XX - Latitudinal occurrence probability trends
+### XX - Decadal trends
+
+### XX - Trends per climate region
 
 
+
+---------------------------------------------------------------
+**Required folder structure**
+---------------------------------------------------------------
+
+```
+
+scripts
+
+input_data
+├── environmental_data
+    ├── ISIMIP3a
+        ├── Climate
+            ├── processed_data
+            ├── raw_data
+        ├── CounterClim
+            ├── processed_data
+            ├── raw_data
+        ├── CounterLandUse
+            ├── processed_data
+            ├── raw_data
+        ├── LandUse
+            ├── processed_data
+            ├── raw_data
+    ├── ISIMIP3b
+        ├── Climate
+            ├── ssp126
+                ├── processed_data
+                    ├── gfdl-esm4
+                    ├── ipsl-cm6a-lr
+                    ├── mpi-esm1-2-hr
+                    ├── ukesm1-0-ll
+                ├── raw_data
+                    ├── gfdl-esm4
+                    ├── ipsl-cm6a-lr
+                    ├── mpi-esm1-2-hr
+                    ├── ukesm1-0-ll
+            ├── ssp370
+                ├── processed_data
+                    ├── gfdl-esm4
+                    ├── ipsl-cm6a-lr
+                    ├── mpi-esm1-2-hr
+                    ├── ukesm1-0-ll
+                ├── raw_data
+                    ├── gfdl-esm4
+                    ├── ipsl-cm6a-lr
+                    ├── mpi-esm1-2-hr
+                    ├── ukesm1-0-ll
+            ├── ssp585
+                ├── processed_data
+                    ├── gfdl-esm4
+                    ├── ipsl-cm6a-lr
+                    ├── mpi-esm1-2-hr
+                    ├── ukesm1-0-ll
+                ├── raw_data
+                    ├── gfdl-esm4
+                    ├── ipsl-cm6a-lr
+                    ├── mpi-esm1-2-hr
+                    ├── ukesm1-0-ll
+        ├── LandUse
+            ├── ssp126
+                ├── processed_data
+                ├── raw_data
+            ├── ssp370
+                ├── processed_data
+                ├── raw_data
+            ├── ssp585
+                ├── processed_data
+                ├── raw_data
+├── raw_infection_data
+├── raw_species_data
+├── spatial_data
+    ├──climate_regions
+    
+
+output_data
+├── data
+├── models
+├── validation
+├── results
+    ├── preprocessed_predictions
+        ├── Culex_pipiens
+        ├── Ixodes_ricinus
+        ├── WNV
+        ├── TBE
+    ├── postprocessed_predictions
+        ├── Culex_pipiens
+        ├── Ixodes_ricinus
+        ├── WNV
+        ├── TBE
+    ├── decadal_predictions
+    ├── duration_predictions
+    ├── climateregions_predictions
+├── plots
+    ├── maps
+    ├── presence_background
+    ├── response_curves
+    ├── overview
+    ├── decadal_trends
+    ├── duration_trends
+    ├── climateregions_trends
+    
+```
+
+
+---------------------------------------------------------------
+**Required data**
+---------------------------------------------------------------
+
+* Vector species occurrence data are available from [GBIF](https://www.gbif.org) and [VectorMap](https://experience.arcgis.com/experience/5f95c3edfbea4634b8347fec0bd1dcd6)
+* Limited human TBE and WNV case infection data are available from [TESSy/ECDC](https://atlas.ecdc.europa.eu/public/index.aspx); comprehensive data are available upon request (subject to non-redistribution conditions)
+* European administrative boundary data (shapefile) is available [here](https://hub.arcgis.com/datasets/bdcb40c0b6124f6d99f10b9b23647712/explore)
+* Historical and future climate data, as well as historical land-use data, are available from [ISIMIP3](https://data.isimip.org/search/)
+* Future land-use data are available from [LUH2](https://luh.umd.edu/data.shtml)
+* Köppen-Geiger climate classification maps are available from [GLOH2O](https://www.gloh2o.org/koppen/)
+
+
+
+---------------------------------------------------------------
+**Operating system info**
+---------------------------------------------------------------
+
+* R version 4.3.1 (2023-06-16 ucrt)
+* Platform: x86_64-w64-mingw32/x64 (64-bit)
+* Running under: Windows 11 x64 (build 26100)
+
+* Attached packages:
+[1] CoordinateCleaner_3.0.1 [2] corrplot_0.92 [3] countrycode_1.6.0 [4] dplyr_1.1.3 [5] dismo_1.3-14 [6] gbm_2.1.8.1 [7] ggh4x_0.3.0 [8] giscoR_0.6.0 [9] ggnewscale_0.5.1 [10] ggplot2_4.0.0 [11] lubridate_1.9.3 [12] maps_3.4.1 [13] mgcv_1.8-42 [14] PresenceAbsence_1.1.11 [15] randomForest_4.7-1.1 [16] readr_2.1.4 [17] sf_1.0-16 [18] sfheaders_0.4.3 [19] stringr_1.5.0 [20] tidyr_1.3.0 [21] tibble_3.2.1 [22] tidyterra_0.6.1 [23] tidyverse_2.0.0 [24] viridis_0.6.4
+
+
+
+---------------------------------------------------------------
+**References**
+---------------------------------------------------------------
