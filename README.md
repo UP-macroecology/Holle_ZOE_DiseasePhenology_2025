@@ -52,19 +52,19 @@ We evaluate the model performance of all algorithms for *Ixodes ricinus* and *Cu
 ### 06 - Species model predictions
 scripts [06a], [06b]
 
-We generate continuous ensemble predictions for historical time periods (1970-2019) using both observed and counterfactual environmental data, allowing us to attribute changes in predictions to climate and land-use factors. For future time periods (2030-2059), we incorporate different environmental forcing scenarios (ssp126, ssp370, ssp585) and, for climate, consider projections from five distinct climate models.
+We generate continuous ensemble predictions for historical time periods (1970-2019) using both observed and counterfactual environmental data, allowing us to attribute changes in predictions to climate and land-use factors. For future time periods (2030-2059), we incorporate different socio-economic forcing scenarios (ssp126, ssp370, ssp585) and, for climate, consider projections from five distinct climate models.
 
 
 ### 07 - Virus data preparation
 scripts [07a], [07b]
 
-We process locally acquired, confirmed human TBE and WNV cases in Europe, reported at the NUTS3 level (provided by [TESSy/ECDC](https://atlas.ecdc.europa.eu/public/index.aspx)) to generate spatially explicit infection data.
+We process locally acquired, confirmed human TBE and WNV cases in Europe, reported at the NUTS3 level (provided by [TESSy/ECDC](https://atlas.ecdc.europa.eu/public/index.aspx)) to generate spatially explicit infection data. This is done by rasterising the European NUTS3 municipalities to the target spatial resolution of 0.5° and extracting the central coordinates of municipalities with observed infections. For NUTS3 municipalities that consist of only one cell after rasterisation, these coordinates are used as the final location for the infection data point. In cases where NUTS3 municipalities are too small to be represented by a 0.5° cell in the rasterisation process but had reported TBE infections, their central coordinates are likewise considered as the infection data point. Infection records stemming from large NUTS3 municipalities spanning more than one cell are excluded to minimise the spatial uncertainty of infection locations.
 
 
 ### 08 - Virus absence data generation
 scripts [08a], [08b]
 
-We generate absence data for the human TBE and WNV infection cases by drawing points from all cells within NUTS3 municipalities in EU/EEA countries with a mandatory surveillance system, selecting only cells where no infections had been reported to the ECDC. Because the set of EU/EEA countries with mandatory reporting changed over time, we adjust the list of eligible countries for each year based on information from the [corresponding Annual Epidemiological Reports](https://www.ecdc.europa.eu/en/publications-data/monitoring/all-annual-epidemiological-reports). To ensure consistency with our temporal resolution, absence points were generated separately from occurrences within the same month of a given year. To minimise spatial autocorrelation, a 50 km thinning threshold was applied to both the monthly infection presence data and the corresponding absence data. Because pathogen distribution depends on the presence of their vector species, we include, in addition to climate variables, the predicted occurrence probability of the main vector species as a predictor variable, following a nested modelling approach. 
+We generate absence data for the human TBE and WNV infection cases by drawing points from all cells within NUTS3 municipalities in EU/EEA countries with a mandatory surveillance system, selecting only cells where no infections had been reported to the ECDC. Because the set of EU/EEA countries with mandatory reporting changed over time, we adjust the list of eligible countries for each year based on information from the [corresponding Annual Epidemiological Reports](https://www.ecdc.europa.eu/en/publications-data/monitoring/all-annual-epidemiological-reports). To ensure consistency with our temporal resolution, absence points are generated separately from occurrences within the same month of a given year. To minimise spatial autocorrelation, a 50 km thinning threshold was applied to both the monthly infection presence data and the corresponding absence data. Because pathogen distribution depends on the presence of their vector species, we include, in addition to climate variables, the predicted suitability of the main vector species as a predictor variable, following a nested modelling approach. 
 
 
 ### 09 - Virus model fitting
@@ -82,19 +82,36 @@ We evaluate the model performance of all algorithms for TBE and WNV using a 5-fo
 ### 11 - Virus model predictions
 scripts [11a], [11b]
 
-We generate continuous ensemble predictions for historical time periods (1970-2019) using both observed and counterfactual environmental data, allowing us to attribute changes in predictions. For future time periods (2030-2059), we incorporate different environmental forcing scenarios (ssp126, ssp370, ssp585) based five distinct climate models. Although land-use variables were not directly included in the virus models, the effects of land-use change were implicitly accounted for through the incorporation of the corresponding habitat suitability predictions of the main vector species.
+We generate continuous ensemble predictions for historical time periods (1970-2019) using both observed and counterfactual environmental data, allowing us to attribute changes in predictions. For future time periods (2030-2059), we incorporate different socio-economic forcing scenarios (ssp126, ssp370, ssp585) based five distinct climate models. Although land-use variables were not directly included in the virus models, the effects of land-use change are implicitly accounted for through the incorporation of the corresponding suitability predictions of the main vector species.
 
 
-## 12 - Vector and virus prediction postprocessing
+### 12 - Vector and virus prediction postprocessing
+script [12]
+
+We post-process the ensemble prediction rasters for the viruses and their primary vector species in three main steps. First, future layers from the same socio-economic scenario are averaged across the five different climate models. Second, vector prediction rasters are masked to include only cells within EU/EEA countries to ensure comparability between vector and virus outputs. Third, for the virus layers, cells are set to 0 whenever the corresponding vector species is not predicted to be present, ensuring for ecological realism.
 
 
-### XX - General overview
+### 13 - Decadal trends in distribution
+script [13]
 
-### XX - Decadal occurrence probability trends
+We visualise the distribution trends of the vectors and viruses for one target month - May for Ixodes ricinus and TBE, and July for Culex pipiens and WNV - across three different target decades: 1970s, 2010, 2050s. For the future target decade (2050s), we look at predictions the were derived from the three different socio-economic scenarios. Only grid cells with vector or virus suitability values indicating at least one predicted presence within the selected month of a given decade are displayed. 
 
-### XX - Decadal trends
 
-### XX - Trends per climate region
+### 14 - Decadal trends in phenology intensity
+script [14]
+
+We calculate and visualise decadal trends in the timing of mean and peak vector and virus suitability throughout the year from historical to future time periods. In doing so, we compare historical phenology trends based on factual and counterfactual scenarios, allowing us to disentangle the relative impacts of climate and land-use changes. We also compare future phenology trends across three different socio-economic scenarios (ssp126, ssp37, ssp585), representing different potential environmental trajectories.
+
+
+### 15 - Decadal trends in phenology intensity per Köppen-Geiger climate region
+script [15]
+
+We calculate and visualise the decadal trends in the timing of mean and peak vector and virus suitability throughout the year, separately for the major Köppen-Geiger climate classes. Historical predictions are based on factual climate and land-use changes, while future predictions consider the three different socio-economic scenarios. As climate zones in Europe have shifted over the past decades, we use the Köppen-Geiger classification map corresponding to each target decade (1970s, 2010s, 2050s).
+
+### 16 - Decadal trends in phenology duration
+script [16]
+
+We calculate and visualise temporal trends in the duration of vector activity and potential virus transmission periods throughout the year. Using the ensemble predictions based on the factual historical climate and land-use changes, as well as on the three future socio-economic scenarios, we first determine the number of months with predicted presence in each cell. Next, we compute the mean duration per decade for each cell. To assess temporal historical and future trends per cell, we fit two separate linear models for each cell: one based on the decadal mean durations of the historical decades (1970s - 2010s), and one based on those of the future decades (2010s - 2050s). The slopes of these models serve as an indicator of change. 
 
 
 
@@ -128,33 +145,39 @@ input_data
                     ├── gfdl-esm4
                     ├── ipsl-cm6a-lr
                     ├── mpi-esm1-2-hr
+                    ├── mri-esm2-0
                     ├── ukesm1-0-ll
                 ├── raw_data
                     ├── gfdl-esm4
                     ├── ipsl-cm6a-lr
                     ├── mpi-esm1-2-hr
+                    ├── mri-esm2-0
                     ├── ukesm1-0-ll
             ├── ssp370
                 ├── processed_data
                     ├── gfdl-esm4
                     ├── ipsl-cm6a-lr
                     ├── mpi-esm1-2-hr
+                    ├── mri-esm2-0
                     ├── ukesm1-0-ll
                 ├── raw_data
                     ├── gfdl-esm4
                     ├── ipsl-cm6a-lr
                     ├── mpi-esm1-2-hr
+                    ├── mri-esm2-0
                     ├── ukesm1-0-ll
             ├── ssp585
                 ├── processed_data
                     ├── gfdl-esm4
                     ├── ipsl-cm6a-lr
                     ├── mpi-esm1-2-hr
+                    ├── mri-esm2-0
                     ├── ukesm1-0-ll
                 ├── raw_data
                     ├── gfdl-esm4
                     ├── ipsl-cm6a-lr
                     ├── mpi-esm1-2-hr
+                    ├── mri-esm2-0
                     ├── ukesm1-0-ll
         ├── LandUse
             ├── ssp126
@@ -187,14 +210,15 @@ output_data
         ├── Ixodes_ricinus
         ├── WNV
         ├── TBE
-    ├── decadal_predictions
-    ├── duration_predictions
-    ├── climateregions_predictions
+    ├── decadal_trends
+    ├── duration_trends
+    ├── climateregions_trends
+    ├── distribution_trends
 ├── plots
     ├── maps
     ├── presence_background
     ├── response_curves
-    ├── overview
+    ├── distribution_trends
     ├── decadal_trends
     ├── duration_trends
     ├── climateregions_trends
