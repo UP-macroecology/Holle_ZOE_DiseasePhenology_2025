@@ -1,5 +1,5 @@
 # ZOE project 
-# Disease phenology analysis
+
 
 #-------------------------------------------------------------------------------
 
@@ -7,9 +7,15 @@
 #                         10c. Response curve plot                       #
 # ---------------------------------------------------------------------- #
 
+# What is done within this script:
+
+# We plot the partial response curves for Ixodes ricinus, Culex pipiens, and 
+# their associated diseases (TBE and WNV) in a single combined plot
+
+
 
 # Load needed packages
-library(ggplot2)
+library(ggplot2) # ggplot2_4.0.0
 
 # Load needed data
 load("output_data/validation/C_pipiens_response_data.RData") # Predictor response data from Culex pipiens
@@ -18,9 +24,11 @@ load("output_data/validation/WNV_response_data.RData") # Predictor response data
 load("output_data/validation/TBE_response_data.RData") # Predictor response data from TBE
 
 
+
 #-------------------------------------------------------------------------------
 
 # 1. Visualise partial response plots  -----------------------------------------
+
 # Including Ixodes ricinus, TBE, Culex pipiens, and WNV
 
 # Bind the predictor response data from each species into one data frame

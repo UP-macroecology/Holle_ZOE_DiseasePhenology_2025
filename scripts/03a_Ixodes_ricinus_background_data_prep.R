@@ -1,17 +1,31 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBE)
+
 
 #-------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------- #
-#                     03a. Background data preparation                   #
+#          03a. Background data preparation - Ixodes ricinus             #
 # ---------------------------------------------------------------------- #
 
+
+# What is done within this script:
+
+# We generate background data for our vector species Ixodes ricinus by randomly 
+# selecting locations within a specified buffer distance of 150 km from the 
+# presence points, aiming for a presence-background ratio of 1:10, excluding 
+# cells containing the actual presence locations. This process is conducted 
+# separately based on occurrences within the same month of a given year, 
+# resulting in temporally matched background data. To avoid spatial 
+# autocorrelation, we thin both the monthly presence and background data of the 
+# species using a 50 km threshold. Finally, we match the species data - 
+# comprising both presence and background data - with the month- and year-specific 
+# climate predictors, as well as year-specific land-use predictors.
+
 # Load needed packages
-library(terra)
-library(sf)
-library(sfheaders)
-library(tidyverse)
+library(terra) # terra_1.7-55
+library(sf) # sf_1.0-16
+library(sfheaders) # sfheaders_0.4.3
+library(tidyverse) # tidyverse_2.0.0
 
 
 # Load needed objects
@@ -23,12 +37,12 @@ datapath_env <- file.path("input_data/environmental_data/ISIMIP3a/")
 # Create a sequence of dates with monthly steps, that are temporally
 # covered by the environmental data
 start_date <- as.Date("1970-01-01") # Define start date
-end_date <- as.Date("2019-12-01") # Define end date
-date_sequence_month <- seq.Date(from = start_date, to = end_date, by = "month") # create a monthly sequence
+end_date <- as.Date("2019-12-01") # Define end date (end of monthly climate data)
+date_sequence_month <- seq.Date(from = start_date, to = end_date, by = "month") # Create a monthly sequence
 date_sequence <- format(date_sequence_month, "%m/%Y") # Extract year and month from dates
 
-# Read in the background mask of Europe (50 km resolution)
-europe_mask <- terra::rast(paste0("input_data/spatial_data/europe_mask_50km.tif"))
+# Read in the background mask of Europe (0.5° resolution)
+europe_mask <- terra::rast("input_data/spatial_data/europe_mask.tif")
 
 # Load cleaned occurrence data
 load("output_data/data/I_ricinus_occurrences_cleaned.RData")
@@ -45,7 +59,7 @@ colnames(I_ricinus_occ_env) <- c("lon", "lat", "occ", "year", "month", "ID", "pr
 
 
 # Loop over all dates in the sequence, 
-# remove duplicates in 50 km² cells, generate background data,
+# remove duplicates in 0.5° cells, generate background data,
 # and match the presence and background data with the time-specific environmental data.
 
 for (d in date_sequence) { # Start of the loop over all dates
@@ -57,7 +71,10 @@ for (d in date_sequence) { # Start of the loop over all dates
   print(y)
   
   # Subset the cleaned occurrence data frame by each date (month and year)
-  subset_year_month <- subset(I_ricinus_occurrences_cleaned, I_ricinus_occurrences_cleaned$year == y & I_ricinus_occurrences_cleaned$month == m)
+  subset_year_month <- I_ricinus_occurrences_cleaned[
+    I_ricinus_occurrences_cleaned$year  == y & 
+      I_ricinus_occurrences_cleaned$month == m, 
+  ]
   
   if (nrow(subset_year_month) > 0) { # Just continue with preparation process if occurrences are available for the date
     
@@ -74,7 +91,8 @@ for (d in date_sequence) { # Start of the loop over all dates
     # Extract an ID per cell
     cellnumbers <- terra::extract(europe_mask, occ_coords, cells = TRUE)
     
-    # Only keep cells that are not duplicated
+    # Remove duplicates based on raster cell (if multiple points fall in the 
+    # same raster cell, only one point is kept)
     occ_coords <- occ_coords[!duplicated(cellnumbers[,"cell"]),]
     
     
@@ -101,13 +119,13 @@ for (d in date_sequence) { # Start of the loop over all dates
       # Place a buffer of 150 km around presence locations
       buf_150 <- buffer(presences_europe, width = 150000)
       
-      # use mask_buf to rasterize buf_150 (which has been a vector so far; !raster required for later steps)
+      # Use mask_buf to rasterize buf_150 (which has been a vector so far; !raster required for later steps)
       buf_150 <- rasterize(buf_150, europe_mask)
       
-      # set raster cells outside the buffer to NA
+      # Set raster cells outside the buffer to NA
       buf_150 <- terra::mask(europe_mask, buf_150, overwrite = TRUE)
       
-      # randomly select background data within the buffer, excluding presence locations (aiming to sample 10x as many background points as presences)
+      # Randomly select background data within the buffer, excluding presence locations (aiming to sample 10x as many background points as presences)
       occ_cells_150 <- terra::extract(buf_150, occ_coords, cells = TRUE)[,"cell"]
       buf_cells_150 <- terra::extract(buf_150, crds(buf_150), cells = TRUE)[,"cell"]
       diff_cells_150 <- setdiff(buf_cells_150, occ_cells_150)
@@ -132,10 +150,10 @@ for (d in date_sequence) { # Start of the loop over all dates
       # Transform data frame into sf object to use in thin function
       occ_coords_sf <- st_as_sf(occ_coords, coords = c("lon", "lat"), crs = "+proj=longlat +datum=WGS84")
       
-      # Using the thin function with a thinning distance of 50 km (checkerboard pattern)
+      # Using the thin function with a thinning distance of 50 km (aiming for a checkerboard-like pattern)
       occ_coords_thinned <- thin(occ_coords_sf, thin_dist = 50000, runs = 1, ncores = 1)
       
-      # Merge data frames to only retained thinned presences and background
+      # Merge data frames to only retain thinned presences
       occ_coords_thinned <- merge(occ_coords_thinned, occ_coords, by = c("lon", "lat"))
       
       
@@ -143,10 +161,10 @@ for (d in date_sequence) { # Start of the loop over all dates
       # Transform data frame into sf object to use in thin function
       abs_coords_sf <- st_as_sf(abs_coords_150, coords = c("lon", "lat"), crs = "+proj=longlat +datum=WGS84")
       
-      # Using the thin function with a thinning distance of 50 km (checkerboard pattern)
+      # Using the thin function with a thinning distance of 50 km (aiming for a checkerboard-like pattern)
       abs_coords_thinned <- thin(abs_coords_sf, thin_dist = 50000, runs = 1, ncores = 1)
       
-      # Merge data frames to only retained thinned presences and background
+      # Merge data frames to only retain thinned background data
       abs_coords_thinned <- merge(abs_coords_thinned, abs_coords_150, by = c("lon", "lat"))
       
       
@@ -173,7 +191,7 @@ for (d in date_sequence) { # Start of the loop over all dates
       env_data <- c(Climate_data, LandUse_data)
       
       # Extract the environmental values per occurrence cell
-      I_ricinus_occ_env_date <- cbind(I_ricinus_occ_thinned, terra::extract(x = env_data, y = I_ricinus_occ_thinned[,c('lon','lat')]))
+      I_ricinus_occ_env_date <- cbind(I_ricinus_occ_thinned, terra::extract(x = env_data, y = I_ricinus_occ_thinned[,c("lon", "lat")]))
       
       # Drop NA for the environmental variables 
       I_ricinus_occ_env_date <- I_ricinus_occ_env_date %>% drop_na()
@@ -200,8 +218,9 @@ for (d in date_sequence) { # Start of the loop over all dates
   
 } # End of loop over dates
 
+
 # Get a summary of presence and background data numbers
-table(I_ricinus_occ_env$occ) # 0: 15549; 1: 2114
+table(I_ricinus_occ_env$occ) 
 print(table(I_ricinus_occ_env$month[I_ricinus_occ_env$occ == 1]))
 
 # Save the resulting data frame, containing thinned presence and background data,
@@ -215,14 +234,21 @@ save(I_ricinus_occ_env, file = "output_data/data/I_ricinus_occ_env.RData")
 
 # 5. Occurrence mapping --------------------------------------------------------
 
-
 # Map the thinned presences and background data
 png("output_data/plots/presence_background/I_ricinus_presence_pseudoabsence.png", width = 2000, height = 2000, res = 300)
 
 
-maps::map('world',xlim=c(-31,40), ylim=c(34,72))
+maps::map('world',xlim=c(-31,40), ylim=c(34,72), 
+          col = "gray97",
+          fill = TRUE,
+          border = "gray30")
+
+maps::map.axes(cex.axis = 0.75)
+
+
 points(I_ricinus_occ_env$lon[I_ricinus_occ_env$occ == 0], I_ricinus_occ_env$lat[I_ricinus_occ_env$occ == 0], col='steelblue4',  pch=19, cex = 0.5)
 points(I_ricinus_occ_env$lon[I_ricinus_occ_env$occ == 1], I_ricinus_occ_env$lat[I_ricinus_occ_env$occ == 1], col='goldenrod',  pch=19, cex = 0.5)
-legend(title = "Ixodes ricinus:", x = -25, y = 50, legend = c("Pseudoabsence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
+
+legend(title = "Ixodes ricinus:", x = -28, y = 50, legend = c("Pseudoabsence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
 
 dev.off()

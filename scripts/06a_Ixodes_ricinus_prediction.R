@@ -1,19 +1,29 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBEV)
+
 
 # ---------------------------------------------------------------------- #
-#                          06a. Model prediction                         #
+#                 06a. Model prediction - Ixodes ricinus                 #
 # ---------------------------------------------------------------------- #
+
+# What is done within this script:
+
+# For Ixodes ricinus, we generate continuous ensemble predictions for historical 
+# time periods under various environmental scenarios (observed climate and land 
+# use change, observed land use change and counterfactual climate, observed 
+# climate change and counterfactual land use, counterfactual climate and 
+# counterfactual land use). For future time periods, we consider different 
+# environmental trajectories based on five different climate models and three 
+# different socioeconomic forcing scenarios (ssp126, ssp370, ssp585).
+
 
 
 # Load needed packages
-library(mgcv)
-library(maxnet)
-library(randomForest)
-library(gbm)
-library(dismo)
-library(terra)
-library(tidyverse)
+library(mgcv) # mgcv_1.8-42
+library(randomForest) # randomForest_4.7-1.1
+library(gbm) # gbm_2.1.8.1
+library(dismo) # dismo_1.3-14
+library(terra) # terra_1.7-55
+library(tidyverse) # tidyverse_2.0.0
 
 
 # Load needed data
@@ -41,14 +51,14 @@ datapath_env <- file.path("input_data/environmental_data/ISIMIP3a/")
 # Load a raster as example template 
 example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_2019.tif")) # Land use data raster
 
-# Prepare a Spatraster to store all prediction rasters of all prediction years, using the env_data as template
+# Prepare a Spatraster to store all prediction rasters of all prediction years, using a template raster
 # For all algorithms and their ensemble
-r_curr_preds_clim_landuse_ens <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_landuse_ens_bin <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_landuse_glm <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_landuse_gam <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_landuse_rf <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_landuse_brt <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_landuse_ens <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_landuse_ens_bin <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_landuse_glm <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_landuse_gam <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_landuse_rf <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_landuse_brt <- terra::rast(example_data, nlyrs = 600)
 
 
 for (y in years) { # Start of the loop over the prediction years
@@ -58,14 +68,14 @@ for (y in years) { # Start of the loop over the prediction years
   # Load a raster as example template 
   example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_",y,".tif")) # Land use data raster
   
-  # Prepare a Spatraster to store the prediction rasters of one prediction year, using the env_data as template
+  # Prepare a Spatraster to store the prediction rasters of one prediction year, using a template raster
   # For all algorithms and their ensemble
-  r_curr_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_glm <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_gam <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_rf <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_brt <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_glm <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_gam <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_rf <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_brt <- terra::rast(example_data, nlyrs = 12)
   
   for (m in month) { # Start of the loop over all months of a year
     
@@ -115,56 +125,56 @@ for (y in years) { # Start of the loop over the prediction years
     } # Close the loop over the number of models
     
     # Average the predicitons per algorithm and store them with coordinate information
-    curr_preds <- data.frame(env_df[,1:2], 
+    past_preds <- data.frame(env_df[,1:2], 
                              glm = rowMeans(preds_glm_month),
                              gam = rowMeans(preds_gam_month),
                              rf = rowMeans(preds_rf_month),
                              brt = rowMeans(preds_brt_month))
     
     # Make ensemble predictions
-    curr_preds$mean_prob = rowMeans(curr_preds[,-c(1:2)])
+    past_preds$mean_prob = rowMeans(past_preds[,-c(1:2)])
     
     # Binarise ensemble predictions
-    curr_preds$bin_pred = ifelse(curr_preds$mean_prob >= comp_perf[comp_perf$alg == "mean_prob", "thresh"], 1, 0)
+    past_preds$bin_pred = ifelse(past_preds$mean_prob >= comp_perf[comp_perf$alg == "mean_prob", "thresh"], 1, 0)
     
     # Make Spatrasters from predictions
-    r_curr_preds <- terra::rast(curr_preds, crs = crs(env_data))
+    r_past_preds <- terra::rast(past_preds, crs = crs(env_data))
     
     # Extract the ensemble raster as well as the rasters based on the different algorithms
-    r_curr_preds_ens <- r_curr_preds[["mean_prob"]]
-    r_curr_preds_ens_bin <- r_curr_preds[["bin_pred"]]
-    r_curr_preds_glm <- r_curr_preds[["glm"]]
-    r_curr_preds_gam <- r_curr_preds[["gam"]]
-    r_curr_preds_rf <- r_curr_preds[["rf"]]
-    r_curr_preds_brt <- r_curr_preds[["brt"]]
+    r_past_preds_ens <- r_past_preds[["mean_prob"]]
+    r_past_preds_ens_bin <- r_past_preds[["bin_pred"]]
+    r_past_preds_glm <- r_past_preds[["glm"]]
+    r_past_preds_gam <- r_past_preds[["gam"]]
+    r_past_preds_rf <- r_past_preds[["rf"]]
+    r_past_preds_brt <- r_past_preds[["brt"]]
     
     # Save the rasters of the different algorithms and their ensemble in the prepared rasterstack
-    r_curr_preds_year_ens <- c(r_curr_preds_year_ens, r_curr_preds_ens)
-    r_curr_preds_year_ens_bin <- c(r_curr_preds_year_ens_bin, r_curr_preds_ens_bin)
-    r_curr_preds_year_glm <- c(r_curr_preds_year_glm, r_curr_preds_glm)
-    r_curr_preds_year_gam <- c(r_curr_preds_year_gam, r_curr_preds_gam)
-    r_curr_preds_year_rf <- c(r_curr_preds_year_rf, r_curr_preds_rf)
-    r_curr_preds_year_brt <- c(r_curr_preds_year_brt, r_curr_preds_brt)
+    r_past_preds_year_ens <- c(r_past_preds_year_ens, r_past_preds_ens)
+    r_past_preds_year_ens_bin <- c(r_past_preds_year_ens_bin, r_past_preds_ens_bin)
+    r_past_preds_year_glm <- c(r_past_preds_year_glm, r_past_preds_glm)
+    r_past_preds_year_gam <- c(r_past_preds_year_gam, r_past_preds_gam)
+    r_past_preds_year_rf <- c(r_past_preds_year_rf, r_past_preds_rf)
+    r_past_preds_year_brt <- c(r_past_preds_year_brt, r_past_preds_brt)
     
     
   } # End of loop over all months
   
   
   # Make sure that raster names are correct
-  names(r_curr_preds_year_ens) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_ens_bin) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_glm) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_gam) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_rf) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_brt) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_ens) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_ens_bin) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_glm) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_gam) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_rf) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_brt) <- sprintf("%02d/%s", 1:12, y)
   
   # Stack the all raster for each year
-  r_curr_preds_clim_landuse_ens <- c(r_curr_preds_clim_landuse_ens, r_curr_preds_year_ens)
-  r_curr_preds_clim_landuse_ens_bin <- c(r_curr_preds_clim_landuse_ens_bin, r_curr_preds_year_ens_bin)
-  r_curr_preds_clim_landuse_glm <- c(r_curr_preds_clim_landuse_glm, r_curr_preds_year_glm)
-  r_curr_preds_clim_landuse_gam <- c(r_curr_preds_clim_landuse_gam, r_curr_preds_year_gam)
-  r_curr_preds_clim_landuse_rf <- c(r_curr_preds_clim_landuse_rf, r_curr_preds_year_rf)
-  r_curr_preds_clim_landuse_brt <- c(r_curr_preds_clim_landuse_brt, r_curr_preds_year_brt)
+  r_past_preds_clim_landuse_ens <- c(r_past_preds_clim_landuse_ens, r_past_preds_year_ens)
+  r_past_preds_clim_landuse_ens_bin <- c(r_past_preds_clim_landuse_ens_bin, r_past_preds_year_ens_bin)
+  r_past_preds_clim_landuse_glm <- c(r_past_preds_clim_landuse_glm, r_past_preds_year_glm)
+  r_past_preds_clim_landuse_gam <- c(r_past_preds_clim_landuse_gam, r_past_preds_year_gam)
+  r_past_preds_clim_landuse_rf <- c(r_past_preds_clim_landuse_rf, r_past_preds_year_rf)
+  r_past_preds_clim_landuse_brt <- c(r_past_preds_clim_landuse_brt, r_past_preds_year_brt)
   
   
   
@@ -172,12 +182,12 @@ for (y in years) { # Start of the loop over the prediction years
 
 
 # Save the raster outputs
-terra::writeRaster(r_curr_preds_clim_landuse_ens, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_ens_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_ens_bin, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_ens_bin_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_glm, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_glm_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_gam, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_gam_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_rf, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_rf_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_landuse_brt, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_brt_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_landuse_ens, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_landuse_ens_bin, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_bin_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_landuse_glm, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_glm_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_landuse_gam, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_gam_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_landuse_rf, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_rf_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_landuse_brt, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_brt_1970_2019.tif", overwrite=T)
 
 
 
@@ -200,14 +210,14 @@ datapath_env <- file.path("input_data/environmental_data/ISIMIP3a/")
 # Load a raster as example template 
 example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_2019.tif")) # Land use data raster
 
-# Prepare a Spatraster to store all prediction rasters of all prediction years, using the env_data as template
+# Prepare a Spatraster to store all prediction rasters of all prediction years, using a template raster
 # For all algorithms and their ensemble
-r_curr_preds_noclim_landuse_ens <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_landuse_ens_bin <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_landuse_glm <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_landuse_gam <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_landuse_rf <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_landuse_brt <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_landuse_ens <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_landuse_ens_bin <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_landuse_glm <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_landuse_gam <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_landuse_rf <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_landuse_brt <- terra::rast(example_data, nlyrs = 600)
 
 for (y in years) { # Start of the loop over the prediction years
   
@@ -216,14 +226,14 @@ for (y in years) { # Start of the loop over the prediction years
   # Load a raster as example template 
   example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_",y,".tif")) # Land use data raster
   
-  # Prepare a Spatraster to store the prediction rasters of one prediction year, using the env_data as template
+  # Prepare a Spatraster to store the prediction rasters of one prediction year, using a template raster
   # For all algorithms and their ensemble
-  r_curr_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_glm <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_gam <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_rf <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_brt <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_glm <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_gam <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_rf <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_brt <- terra::rast(example_data, nlyrs = 12)
   
   for (m in month) { # Start of the loop over all months of a year
     
@@ -250,9 +260,6 @@ for (y in years) { # Start of the loop over the prediction years
       
       print(n)
       
-      # Prepare a data frame with environmental data
-      env_df <- data.frame(crds(env_data[[my_preds]]),as.points(env_data[[my_preds]]))
-      
       # Extract the predictors within that model (use GLM as example model)
       model_name <- names(models_glm)[n]
       my_preds <- unlist(strsplit(model_name, "\\+"))
@@ -277,56 +284,56 @@ for (y in years) { # Start of the loop over the prediction years
     
     
     # Average the predicitons per algorithm and store them with coordinate information
-    curr_preds <- data.frame(env_df[,1:2], 
+    past_preds <- data.frame(env_df[,1:2], 
                              glm = rowMeans(preds_glm_month),
                              gam = rowMeans(preds_gam_month),
                              rf = rowMeans(preds_rf_month),
                              brt = rowMeans(preds_brt_month))
     
     # Make ensemble predictions
-    curr_preds$mean_prob = rowMeans(curr_preds[,-c(1:2)])
+    past_preds$mean_prob = rowMeans(past_preds[,-c(1:2)])
     
     # Binarise ensemble predictions
-    curr_preds$bin_pred = ifelse(curr_preds$mean_prob >= comp_perf[comp_perf$alg == "mean_prob", "thresh"], 1, 0)
+    past_preds$bin_pred = ifelse(past_preds$mean_prob >= comp_perf[comp_perf$alg == "mean_prob", "thresh"], 1, 0)
     
     # Make Spatrasters from predictions
-    r_curr_preds <- terra::rast(curr_preds, crs = crs(env_data))
+    r_past_preds <- terra::rast(past_preds, crs = crs(env_data))
     
     # Extract the ensemble raster as well as the rasters based on the different algorithms
-    r_curr_preds_ens <- r_curr_preds[["mean_prob"]]
-    r_curr_preds_ens_bin <- r_curr_preds[["bin_pred"]]
-    r_curr_preds_glm <- r_curr_preds[["glm"]]
-    r_curr_preds_gam <- r_curr_preds[["gam"]]
-    r_curr_preds_rf <- r_curr_preds[["rf"]]
-    r_curr_preds_brt <- r_curr_preds[["brt"]]
+    r_past_preds_ens <- r_past_preds[["mean_prob"]]
+    r_past_preds_ens_bin <- r_past_preds[["bin_pred"]]
+    r_past_preds_glm <- r_past_preds[["glm"]]
+    r_past_preds_gam <- r_past_preds[["gam"]]
+    r_past_preds_rf <- r_past_preds[["rf"]]
+    r_past_preds_brt <- r_past_preds[["brt"]]
     
     # Save the rasters of the different algorithms and their ensemble in the prepared rasterstack
-    r_curr_preds_year_ens <- c(r_curr_preds_year_ens, r_curr_preds_ens)
-    r_curr_preds_year_ens_bin <- c(r_curr_preds_year_ens_bin, r_curr_preds_ens_bin)
-    r_curr_preds_year_glm <- c(r_curr_preds_year_glm, r_curr_preds_glm)
-    r_curr_preds_year_gam <- c(r_curr_preds_year_gam, r_curr_preds_gam)
-    r_curr_preds_year_rf <- c(r_curr_preds_year_rf, r_curr_preds_rf)
-    r_curr_preds_year_brt <- c(r_curr_preds_year_brt, r_curr_preds_brt)
+    r_past_preds_year_ens <- c(r_past_preds_year_ens, r_past_preds_ens)
+    r_past_preds_year_ens_bin <- c(r_past_preds_year_ens_bin, r_past_preds_ens_bin)
+    r_past_preds_year_glm <- c(r_past_preds_year_glm, r_past_preds_glm)
+    r_past_preds_year_gam <- c(r_past_preds_year_gam, r_past_preds_gam)
+    r_past_preds_year_rf <- c(r_past_preds_year_rf, r_past_preds_rf)
+    r_past_preds_year_brt <- c(r_past_preds_year_brt, r_past_preds_brt)
     
     
   } # End of loop over all months
   
   
   # Make sure that raster names are correct
-  names(r_curr_preds_year_ens) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_ens_bin) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_glm) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_gam) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_rf) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_brt) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_ens) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_ens_bin) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_glm) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_gam) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_rf) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_brt) <- sprintf("%02d/%s", 1:12, y)
   
   # Stack the all raster for each year
-  r_curr_preds_noclim_landuse_ens <- c(r_curr_preds_noclim_landuse_ens, r_curr_preds_year_ens)
-  r_curr_preds_noclim_landuse_ens_bin <- c(r_curr_preds_noclim_landuse_ens_bin, r_curr_preds_year_ens_bin)
-  r_curr_preds_noclim_landuse_glm <- c(r_curr_preds_noclim_landuse_glm, r_curr_preds_year_glm)
-  r_curr_preds_noclim_landuse_gam <- c(r_curr_preds_noclim_landuse_gam, r_curr_preds_year_gam)
-  r_curr_preds_noclim_landuse_rf <- c(r_curr_preds_noclim_landuse_rf, r_curr_preds_year_rf)
-  r_curr_preds_noclim_landuse_brt <- c(r_curr_preds_noclim_landuse_brt, r_curr_preds_year_brt)
+  r_past_preds_noclim_landuse_ens <- c(r_past_preds_noclim_landuse_ens, r_past_preds_year_ens)
+  r_past_preds_noclim_landuse_ens_bin <- c(r_past_preds_noclim_landuse_ens_bin, r_past_preds_year_ens_bin)
+  r_past_preds_noclim_landuse_glm <- c(r_past_preds_noclim_landuse_glm, r_past_preds_year_glm)
+  r_past_preds_noclim_landuse_gam <- c(r_past_preds_noclim_landuse_gam, r_past_preds_year_gam)
+  r_past_preds_noclim_landuse_rf <- c(r_past_preds_noclim_landuse_rf, r_past_preds_year_rf)
+  r_past_preds_noclim_landuse_brt <- c(r_past_preds_noclim_landuse_brt, r_past_preds_year_brt)
   
   
   
@@ -334,12 +341,12 @@ for (y in years) { # Start of the loop over the prediction years
 
 
 # Save the raster outputs
-terra::writeRaster(r_curr_preds_noclim_landuse_ens, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_landuse_ens_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_ens_bin, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_landuse_ens_bin_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_glm, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_landuse_glm_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_gam, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_landuse_gam_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_rf, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_landuse_rf_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_landuse_brt, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_landuse_brt_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_landuse_ens, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_landuse_ens_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_landuse_ens_bin, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_landuse_ens_bin_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_landuse_glm, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_landuse_glm_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_landuse_gam, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_landuse_gam_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_landuse_rf, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_landuse_rf_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_landuse_brt, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_landuse_brt_1970_2019.tif", overwrite=T)
 
 
 
@@ -347,7 +354,7 @@ terra::writeRaster(r_curr_preds_noclim_landuse_brt, filename = "output_data/resu
 #-------------------------------------------------------------------------------
 
 # 3. Past monthly predictions from 1970 to 2019 --------------------------------
-# under counterfactual land use scenario and the factual climate scenario
+# under counterfactual land use scenario and the factual climate data
 # (land use reference year 1901)
 # Based on all four applied algorithms and their ensemble
 
@@ -363,14 +370,14 @@ datapath_env <- file.path("input_data/environmental_data/ISIMIP3a/")
 # Load a raster as example template 
 example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_2019.tif")) # Land use data raster
 
-# Prepare a Spatraster to store all prediction rasters of all prediction years, using the env_data as template
+# Prepare a Spatraster to store all prediction rasters of all prediction years, using a template raster
 # For all algorithms and their ensemble
-r_curr_preds_clim_nolanduse_ens <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_nolanduse_ens_bin <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_nolanduse_glm <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_nolanduse_gam <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_nolanduse_rf <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_clim_nolanduse_brt <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_nolanduse_ens <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_nolanduse_ens_bin <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_nolanduse_glm <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_nolanduse_gam <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_nolanduse_rf <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_clim_nolanduse_brt <- terra::rast(example_data, nlyrs = 600)
 
 
 for (y in years) { # Start of the loop over the prediction years
@@ -380,14 +387,14 @@ for (y in years) { # Start of the loop over the prediction years
   # Load a raster as example template 
   example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_",y,".tif")) # Land use data raster
   
-  # Prepare a Spatraster to store the prediction rasters of one prediction year, using the env_data as template
+  # Prepare a Spatraster to store the prediction rasters of one prediction year, using a template raster
   # For all algorithms and their ensemble
-  r_curr_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_glm <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_gam <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_rf <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_brt <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_glm <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_gam <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_rf <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_brt <- terra::rast(example_data, nlyrs = 12)
   
   for (m in month) { # Start of the loop over all months of a year
     
@@ -437,36 +444,36 @@ for (y in years) { # Start of the loop over the prediction years
     
     
     # Average the predicitons per algorithm and store them with coordinate information
-    curr_preds <- data.frame(env_df[,1:2], 
+    past_preds <- data.frame(env_df[,1:2], 
                              glm = rowMeans(preds_glm_month),
                              gam = rowMeans(preds_gam_month),
                              rf = rowMeans(preds_rf_month),
                              brt = rowMeans(preds_brt_month))
     
     # Make ensemble predictions
-    curr_preds$mean_prob = rowMeans(curr_preds[,-c(1:2)])
+    past_preds$mean_prob = rowMeans(past_preds[,-c(1:2)])
     
     # Binarise ensemble predictions
-    curr_preds$bin_pred = ifelse(curr_preds$mean_prob >= comp_perf[comp_perf$alg == "mean_prob", "thresh"], 1, 0)
+    past_preds$bin_pred = ifelse(past_preds$mean_prob >= comp_perf[comp_perf$alg == "mean_prob", "thresh"], 1, 0)
     
     # Make Spatrasters from predictions
-    r_curr_preds <- terra::rast(curr_preds, crs = crs(env_data))
+    r_past_preds <- terra::rast(past_preds, crs = crs(env_data))
     
     # Extract the ensemble raster as well as the rasters based on the different algorithms
-    r_curr_preds_ens <- r_curr_preds[["mean_prob"]]
-    r_curr_preds_ens_bin <- r_curr_preds[["bin_pred"]]
-    r_curr_preds_glm <- r_curr_preds[["glm"]]
-    r_curr_preds_gam <- r_curr_preds[["gam"]]
-    r_curr_preds_rf <- r_curr_preds[["rf"]]
-    r_curr_preds_brt <- r_curr_preds[["brt"]]
+    r_past_preds_ens <- r_past_preds[["mean_prob"]]
+    r_past_preds_ens_bin <- r_past_preds[["bin_pred"]]
+    r_past_preds_glm <- r_past_preds[["glm"]]
+    r_past_preds_gam <- r_past_preds[["gam"]]
+    r_past_preds_rf <- r_past_preds[["rf"]]
+    r_past_preds_brt <- r_past_preds[["brt"]]
     
     # Save the rasters of the different algorithms and their ensemble in the prepared rasterstack
-    r_curr_preds_year_ens <- c(r_curr_preds_year_ens, r_curr_preds_ens)
-    r_curr_preds_year_ens_bin <- c(r_curr_preds_year_ens_bin, r_curr_preds_ens_bin)
-    r_curr_preds_year_glm <- c(r_curr_preds_year_glm, r_curr_preds_glm)
-    r_curr_preds_year_gam <- c(r_curr_preds_year_gam, r_curr_preds_gam)
-    r_curr_preds_year_rf <- c(r_curr_preds_year_rf, r_curr_preds_rf)
-    r_curr_preds_year_brt <- c(r_curr_preds_year_brt, r_curr_preds_brt)
+    r_past_preds_year_ens <- c(r_past_preds_year_ens, r_past_preds_ens)
+    r_past_preds_year_ens_bin <- c(r_past_preds_year_ens_bin, r_past_preds_ens_bin)
+    r_past_preds_year_glm <- c(r_past_preds_year_glm, r_past_preds_glm)
+    r_past_preds_year_gam <- c(r_past_preds_year_gam, r_past_preds_gam)
+    r_past_preds_year_rf <- c(r_past_preds_year_rf, r_past_preds_rf)
+    r_past_preds_year_brt <- c(r_past_preds_year_brt, r_past_preds_brt)
     
     
     
@@ -474,31 +481,31 @@ for (y in years) { # Start of the loop over the prediction years
   
   
   # Make sure that raster names are correct
-  names(r_curr_preds_year_ens) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_ens_bin) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_glm) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_gam) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_rf) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_brt) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_ens) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_ens_bin) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_glm) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_gam) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_rf) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_brt) <- sprintf("%02d/%s", 1:12, y)
   
   # Stack the all raster for each year
-  r_curr_preds_clim_nolanduse_ens <- c(r_curr_preds_clim_nolanduse_ens, r_curr_preds_year_ens)
-  r_curr_preds_clim_nolanduse_ens_bin <- c(r_curr_preds_clim_nolanduse_ens_bin, r_curr_preds_year_ens_bin)
-  r_curr_preds_clim_nolanduse_glm <- c(r_curr_preds_clim_nolanduse_glm, r_curr_preds_year_glm)
-  r_curr_preds_clim_nolanduse_gam <- c(r_curr_preds_clim_nolanduse_gam, r_curr_preds_year_gam)
-  r_curr_preds_clim_nolanduse_rf <- c(r_curr_preds_clim_nolanduse_rf, r_curr_preds_year_rf)
-  r_curr_preds_clim_nolanduse_brt <- c(r_curr_preds_clim_nolanduse_brt, r_curr_preds_year_brt)
+  r_past_preds_clim_nolanduse_ens <- c(r_past_preds_clim_nolanduse_ens, r_past_preds_year_ens)
+  r_past_preds_clim_nolanduse_ens_bin <- c(r_past_preds_clim_nolanduse_ens_bin, r_past_preds_year_ens_bin)
+  r_past_preds_clim_nolanduse_glm <- c(r_past_preds_clim_nolanduse_glm, r_past_preds_year_glm)
+  r_past_preds_clim_nolanduse_gam <- c(r_past_preds_clim_nolanduse_gam, r_past_preds_year_gam)
+  r_past_preds_clim_nolanduse_rf <- c(r_past_preds_clim_nolanduse_rf, r_past_preds_year_rf)
+  r_past_preds_clim_nolanduse_brt <- c(r_past_preds_clim_nolanduse_brt, r_past_preds_year_brt)
   
 } # End of the loop over all considered years
 
 
 # Save the raster outputs
-terra::writeRaster(r_curr_preds_clim_nolanduse_ens, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_nolanduse_ens_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_nolanduse_ens_bin, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_nolanduse_ens_bin_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_nolanduse_glm, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_nolanduse_glm_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_nolanduse_gam, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_nolanduse_gam_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_nolanduse_rf, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_nolanduse_rf_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_clim_nolanduse_brt, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_clim_nolanduse_brt_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_nolanduse_ens, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_nolanduse_ens_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_nolanduse_ens_bin, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_nolanduse_ens_bin_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_nolanduse_glm, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_nolanduse_glm_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_nolanduse_gam, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_nolanduse_gam_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_nolanduse_rf, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_nolanduse_rf_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_clim_nolanduse_brt, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_nolanduse_brt_1970_2019.tif", overwrite=T)
 
 
 
@@ -522,14 +529,14 @@ datapath_env <- file.path("input_data/environmental_data/ISIMIP3a/")
 # Load a raster as example template 
 example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_2019.tif")) # Land use data raster
 
-# Prepare a Spatraster to store all prediction rasters of all prediction years, using the env_data as template
+# Prepare a Spatraster to store all prediction rasters of all prediction years, using a template raster
 # For all algorithms and their ensemble
-r_curr_preds_noclim_nolanduse_ens <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_nolanduse_ens_bin <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_nolanduse_glm <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_nolanduse_gam <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_nolanduse_rf <- terra::rast(example_data, nlyrs = 600)
-r_curr_preds_noclim_nolanduse_brt <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_nolanduse_ens <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_nolanduse_ens_bin <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_nolanduse_glm <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_nolanduse_gam <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_nolanduse_rf <- terra::rast(example_data, nlyrs = 600)
+r_past_preds_noclim_nolanduse_brt <- terra::rast(example_data, nlyrs = 600)
 
 
 for (y in years) { # Start of the loop over the prediction years
@@ -539,14 +546,14 @@ for (y in years) { # Start of the loop over the prediction years
   # Load a raster as example template 
   example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_",y,".tif")) # Land use data raster
   
-  # Prepare a Spatraster to store the prediction rasters of one prediction year, using the env_data as template
+  # Prepare a Spatraster to store the prediction rasters of one prediction year, using a template raster
   # For all algorithms and their ensemble
-  r_curr_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_glm <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_gam <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_rf <- terra::rast(example_data, nlyrs = 12)
-  r_curr_preds_year_brt <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_glm <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_gam <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_rf <- terra::rast(example_data, nlyrs = 12)
+  r_past_preds_year_brt <- terra::rast(example_data, nlyrs = 12)
   
   for (m in month) { # Start of the loop over all months of a year
     
@@ -596,36 +603,36 @@ for (y in years) { # Start of the loop over the prediction years
     
     
     # Average the predicitons per algorithm and store them with coordinate information
-    curr_preds <- data.frame(env_df[,1:2], 
+    past_preds <- data.frame(env_df[,1:2], 
                              glm = rowMeans(preds_glm_month),
                              gam = rowMeans(preds_gam_month),
                              rf = rowMeans(preds_rf_month),
                              brt = rowMeans(preds_brt_month))
     
     # Make ensemble predictions
-    curr_preds$mean_prob = rowMeans(curr_preds[,-c(1:2)])
+    past_preds$mean_prob = rowMeans(past_preds[,-c(1:2)])
     
     # Binarise ensemble predictions
-    curr_preds$bin_pred = ifelse(curr_preds$mean_prob >= comp_perf[comp_perf$alg == "mean_prob", "thresh"], 1, 0)
+    past_preds$bin_pred = ifelse(past_preds$mean_prob >= comp_perf[comp_perf$alg == "mean_prob", "thresh"], 1, 0)
     
     # Make Spatrasters from predictions
-    r_curr_preds <- terra::rast(curr_preds, crs = crs(env_data))
+    r_past_preds <- terra::rast(past_preds, crs = crs(env_data))
     
     # Extract the ensemble raster as well as the rasters based on the different algorithms
-    r_curr_preds_ens <- r_curr_preds[["mean_prob"]]
-    r_curr_preds_ens_bin <- r_curr_preds[["bin_pred"]]
-    r_curr_preds_glm <- r_curr_preds[["glm"]]
-    r_curr_preds_gam <- r_curr_preds[["gam"]]
-    r_curr_preds_rf <- r_curr_preds[["rf"]]
-    r_curr_preds_brt <- r_curr_preds[["brt"]]
+    r_past_preds_ens <- r_past_preds[["mean_prob"]]
+    r_past_preds_ens_bin <- r_past_preds[["bin_pred"]]
+    r_past_preds_glm <- r_past_preds[["glm"]]
+    r_past_preds_gam <- r_past_preds[["gam"]]
+    r_past_preds_rf <- r_past_preds[["rf"]]
+    r_past_preds_brt <- r_past_preds[["brt"]]
     
     # Save the rasters of the different algorithms and their ensemble in the prepared rasterstack
-    r_curr_preds_year_ens <- c(r_curr_preds_year_ens, r_curr_preds_ens)
-    r_curr_preds_year_ens_bin <- c(r_curr_preds_year_ens_bin, r_curr_preds_ens_bin)
-    r_curr_preds_year_glm <- c(r_curr_preds_year_glm, r_curr_preds_glm)
-    r_curr_preds_year_gam <- c(r_curr_preds_year_gam, r_curr_preds_gam)
-    r_curr_preds_year_rf <- c(r_curr_preds_year_rf, r_curr_preds_rf)
-    r_curr_preds_year_brt <- c(r_curr_preds_year_brt, r_curr_preds_brt)
+    r_past_preds_year_ens <- c(r_past_preds_year_ens, r_past_preds_ens)
+    r_past_preds_year_ens_bin <- c(r_past_preds_year_ens_bin, r_past_preds_ens_bin)
+    r_past_preds_year_glm <- c(r_past_preds_year_glm, r_past_preds_glm)
+    r_past_preds_year_gam <- c(r_past_preds_year_gam, r_past_preds_gam)
+    r_past_preds_year_rf <- c(r_past_preds_year_rf, r_past_preds_rf)
+    r_past_preds_year_brt <- c(r_past_preds_year_brt, r_past_preds_brt)
     
     
     
@@ -633,44 +640,44 @@ for (y in years) { # Start of the loop over the prediction years
   
   
   # Make sure that raster names are correct
-  names(r_curr_preds_year_ens) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_ens_bin) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_glm) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_gam) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_rf) <- sprintf("%02d/%s", 1:12, y)
-  names(r_curr_preds_year_brt) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_ens) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_ens_bin) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_glm) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_gam) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_rf) <- sprintf("%02d/%s", 1:12, y)
+  names(r_past_preds_year_brt) <- sprintf("%02d/%s", 1:12, y)
   
   # Stack the all raster for each year
-  r_curr_preds_noclim_nolanduse_ens <- c(r_curr_preds_noclim_nolanduse_ens, r_curr_preds_year_ens)
-  r_curr_preds_noclim_nolanduse_ens_bin <- c(r_curr_preds_noclim_nolanduse_ens_bin, r_curr_preds_year_ens_bin)
-  r_curr_preds_noclim_nolanduse_glm <- c(r_curr_preds_noclim_nolanduse_glm, r_curr_preds_year_glm)
-  r_curr_preds_noclim_nolanduse_gam <- c(r_curr_preds_noclim_nolanduse_gam, r_curr_preds_year_gam)
-  r_curr_preds_noclim_nolanduse_rf <- c(r_curr_preds_noclim_nolanduse_rf, r_curr_preds_year_rf)
-  r_curr_preds_noclim_nolanduse_brt <- c(r_curr_preds_noclim_nolanduse_brt, r_curr_preds_year_brt)
+  r_past_preds_noclim_nolanduse_ens <- c(r_past_preds_noclim_nolanduse_ens, r_past_preds_year_ens)
+  r_past_preds_noclim_nolanduse_ens_bin <- c(r_past_preds_noclim_nolanduse_ens_bin, r_past_preds_year_ens_bin)
+  r_past_preds_noclim_nolanduse_glm <- c(r_past_preds_noclim_nolanduse_glm, r_past_preds_year_glm)
+  r_past_preds_noclim_nolanduse_gam <- c(r_past_preds_noclim_nolanduse_gam, r_past_preds_year_gam)
+  r_past_preds_noclim_nolanduse_rf <- c(r_past_preds_noclim_nolanduse_rf, r_past_preds_year_rf)
+  r_past_preds_noclim_nolanduse_brt <- c(r_past_preds_noclim_nolanduse_brt, r_past_preds_year_brt)
   
 } # End of the loop over all considered years
 
 
 # Save the raster outputs
-terra::writeRaster(r_curr_preds_noclim_nolanduse_ens, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_nolanduse_ens_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_nolanduse_ens_bin, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_nolanduse_ens_bin_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_nolanduse_glm, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_nolanduse_glm_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_nolanduse_gam, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_nolanduse_gam_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_nolanduse_rf, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_nolanduse_rf_1970_2019.tif", overwrite=T)
-terra::writeRaster(r_curr_preds_noclim_nolanduse_brt, filename = "output_data/results/preprocessed_predictions/I_ricinus_preds_noclim_nolanduse_brt_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_nolanduse_ens, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_nolanduse_ens_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_nolanduse_ens_bin, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_nolanduse_ens_bin_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_nolanduse_glm, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_nolanduse_glm_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_nolanduse_gam, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_nolanduse_gam_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_nolanduse_rf, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_nolanduse_rf_1970_2019.tif", overwrite=T)
+terra::writeRaster(r_past_preds_noclim_nolanduse_brt, filename = "output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_nolanduse_brt_1970_2019.tif", overwrite=T)
 
 
 
 
 #-------------------------------------------------------------------------------
 
-# 5. Future monthly predictions from 2030 to 2070 ------------------------------
+# 5. Future monthly predictions from 2020 to 2059 ------------------------------
 # under climate change and land use change 
 # (3 different scenarios, 5 different climate models)
 # Based on all four applied algorithms and their ensemble
 
 # Prepare a vector containing the years for monthly predictions
-years <- c(2030:2070)
+years <- c(2020:2059)
 
 # Prepare vector containing the months of prediction
 month <- str_pad(1:12, width = 2, pad = "0")
@@ -695,7 +702,7 @@ for (s in scenario) { # Start of the loop over the three different forcing scena
     print(l)
     
     # Check if file of ensemble results already exist
-    file_exists <- file.exists(paste0("output_data/results/I_ricinus_preds_clim_landuse_ens_2030_2070_",l,"_",s,".tif"))
+    file_exists <- file.exists(paste0("output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_2020_2059_",l,"_",s,".tif"))
     
     # If that is the case. skip to the next iteration
     if (file_exists == TRUE) { print("prediction already done")
@@ -705,14 +712,14 @@ for (s in scenario) { # Start of the loop over the three different forcing scena
     # Load a raster as example template 
     example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_2019.tif")) # Land use data raster
     
-    # Prepare a Spatraster to store all prediction rasters of all prediction years, using the env_data as template
+    # Prepare a Spatraster to store all prediction rasters of all prediction years, using a template raster
     # For all algorithms and their ensemble
-    r_fut_preds_clim_landuse_ens <- terra::rast(example_data, nlyrs = 492)
-    r_fut_preds_clim_landuse_ens_bin <- terra::rast(example_data, nlyrs = 492)
-    r_fut_preds_clim_landuse_glm <- terra::rast(example_data, nlyrs = 492)
-    r_fut_preds_clim_landuse_gam <- terra::rast(example_data, nlyrs = 492)
-    r_fut_preds_clim_landuse_rf <- terra::rast(example_data, nlyrs = 492)
-    r_fut_preds_clim_landuse_brt <- terra::rast(example_data, nlyrs = 492)
+    r_fut_preds_clim_landuse_ens <- terra::rast(example_data, nlyrs = 480)
+    r_fut_preds_clim_landuse_ens_bin <- terra::rast(example_data, nlyrs = 480)
+    r_fut_preds_clim_landuse_glm <- terra::rast(example_data, nlyrs = 480)
+    r_fut_preds_clim_landuse_gam <- terra::rast(example_data, nlyrs = 480)
+    r_fut_preds_clim_landuse_rf <- terra::rast(example_data, nlyrs = 480)
+    r_fut_preds_clim_landuse_brt <- terra::rast(example_data, nlyrs = 480)
     
     for (y in years) { # Start of the loop over the prediction years
       
@@ -721,7 +728,7 @@ for (s in scenario) { # Start of the loop over the three different forcing scena
       # Load a raster as example template 
       example_data <- terra::rast(paste0(datapath_env, "/LandUse/processed_data/LandUse_data_2019.tif")) # Land use data raster
       
-      # Prepare a Spatraster to store the prediction rasters of one prediction year, using the env_data as template
+      # Prepare a Spatraster to store the prediction rasters of one prediction year, using a template raster
       # For all algorithms and their ensemble
       r_fut_preds_year_ens <- terra::rast(example_data, nlyrs = 12)
       r_fut_preds_year_ens_bin <- terra::rast(example_data, nlyrs = 12)
@@ -835,12 +842,12 @@ for (s in scenario) { # Start of the loop over the three different forcing scena
     
     
     # Save the raster outputs
-    terra::writeRaster(r_fut_preds_clim_landuse_ens, filename = paste0("output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_ens_2030_2070_",l,"_",s,".tif"), overwrite=T)
-    terra::writeRaster(r_fut_preds_clim_landuse_ens_bin, filename = paste0("output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_ens_bin_2030_2070_",l,"_",s,".tif"), overwrite=T)
-    terra::writeRaster(r_fut_preds_clim_landuse_glm, filename = paste0("output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_glm_2030_2070_",l,"_",s,".tif"), overwrite=T)
-    terra::writeRaster(r_fut_preds_clim_landuse_gam, filename = paste0("output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_gam_2030_2070_",l,"_",s,".tif"), overwrite=T)
-    terra::writeRaster(r_fut_preds_clim_landuse_rf, filename = paste0("output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_rf_2030_2070_",l,"_",s,".tif"), overwrite=T)
-    terra::writeRaster(r_fut_preds_clim_landuse_brt, filename = paste0("output_data/results/preprocessed_predictions/I_ricinus_preds_clim_landuse_brt_2030_2070_",l,"_",s,".tif"), overwrite=T)
+    terra::writeRaster(r_fut_preds_clim_landuse_ens, filename = paste0("output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_2020_2059_",l,"_",s,".tif"), overwrite=T)
+    terra::writeRaster(r_fut_preds_clim_landuse_ens_bin, filename = paste0("output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_bin_2020_2059_",l,"_",s,".tif"), overwrite=T)
+    terra::writeRaster(r_fut_preds_clim_landuse_glm, filename = paste0("output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_glm_2020_2059_",l,"_",s,".tif"), overwrite=T)
+    terra::writeRaster(r_fut_preds_clim_landuse_gam, filename = paste0("output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_gam_2020_2059_",l,"_",s,".tif"), overwrite=T)
+    terra::writeRaster(r_fut_preds_clim_landuse_rf, filename = paste0("output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_rf_2020_2059_",l,"_",s,".tif"), overwrite=T)
+    terra::writeRaster(r_fut_preds_clim_landuse_brt, filename = paste0("output_data/results/preprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_brt_2020_2059_",l,"_",s,".tif"), overwrite=T)
     
     
     

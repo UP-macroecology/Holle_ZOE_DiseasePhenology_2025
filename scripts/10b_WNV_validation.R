@@ -1,27 +1,37 @@
-# Disease phenology analysis of West Nile Virus in Europe
+# ZOE project
+
 
 #-------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------- #
-#                          10b. Model validation                         #
+#                     10b. Model validation - WNV                        #
 # ---------------------------------------------------------------------- #
+
+# What is done within this script:
+
+# We evaluate the model performance of all algorithms for WNV using a 
+# 5-fold cross-validation approach, focusing on performance metrics such as AUC 
+# and the Boyce index. To further assess the ensemble model performance, we 
+# calculate the average of the continuous cross-validated predictions. 
+# Additionally, we extract monthly performance measures and generate plots of 
+# response curves for each predictor variable.
+
 
 
 # Load needed packages
-library(mgcv)
-library(maxnet)
-library(randomForest)
-library(gbm)
-library(dismo)
-library(ggplot2)
-library(PresenceAbsence)
-library(tidyverse)
+library(mgcv) # mgcv_1.8-42
+library(randomForest) # randomForest_4.7-1.1
+library(gbm) # gbm_2.1.8.1
+library(dismo) # dismo_1.3-14
+library(ggplot2) # ggplot2_4.0.0
+library(PresenceAbsence) # PresenceAbsence_1.1.11
+library(tidyverse) # tidyverse_2.0.0
 
 # Load needed objects
 source("scripts/00_functions.R") # Get the function for SDM evaluation,
 # Boyce index with smoothing methods (Liu et al. (2024)), and predict function
 
-# Read in SDM models
+# Read in SDMs
 load("output_data/models/WNV_SDMs.RData")
 
 
@@ -36,6 +46,8 @@ kfolds <- 5
 ks <- dismo::kfold(seq_len(nrow(WNV_occ_env)), k = kfolds)
 
 
+
+# (a) Generalised linear models ------------------------------------------------
 
 # GLM
 print("GLM")
@@ -95,6 +107,8 @@ avg_glm_performances <- as.data.frame(t(avg_glm_performances))
 
 
 
+# (b) Generalised additive models ----------------------------------------------
+
 # GAM
 print("GAM")
 
@@ -153,6 +167,8 @@ avg_gam_performances <- as.data.frame(t(avg_gam_performances))
 
 
 
+# (c) Random forests -----------------------------------------------------------
+
 # RF
 print("RF")
 
@@ -210,6 +226,8 @@ avg_rf_performances <- sapply(c("AUC", "TSS", "Kappa", "Sens", "Spec", "PCC", "D
 avg_rf_performances <- as.data.frame(t(avg_rf_performances))
 
 
+
+# (d) Boosted regression trees -------------------------------------------------
 
 # BRT
 print("BRT")
@@ -318,16 +336,20 @@ save(m_glm_preds_cv_all, glm_performances, m_gam_preds_cv_all, gam_performances,
 
 #-------------------------------------------------------------------------------
 
-# 3. Monthly model performances ------------------------------------------------
+# 3. Monthly ensemble model performance ----------------------------------------
 
 
 # Identify the earliest and latest month of observation
 start_month <- min(WNV_occ_env$month)
 end_month <- max(WNV_occ_env$month)
 
-
 # Create a vector containing the months of a year
 month <- str_pad(paste0(start_month:end_month), width = 2, pad = "0")
+
+# Create an empty data frame to store the ensemble performance measures
+# for each month
+WNV_monthly_validation <- data.frame(matrix(ncol = 10, nrow = 0))
+colnames(WNV_monthly_validation) <- c("Month", "AUC", "TSS", "Kappa", "Sens", "Spec", "PCC", "D2", "thresh", "Boyce")
 
 
 for (m in month) { # Start of the loop over all months
@@ -350,22 +372,38 @@ for (m in month) { # Start of the loop over all months
   m_ens_perf_cv_month <- evalSDM(WNV_occ_env_month$occ, monthly_data, weights = monthly_weights)
   
   # Calculate the Boyce index with smoothing methods for the respective month
+  # with error handling as these occurr due to months with low amount of data
+  boyce_index_m_ens_month <- tryCatch({
   presences_month <- which(WNV_occ_env_month$occ == 1)
   m_ens_preds_cv_presences_month <- monthly_data[presences_month]
   absences_month <- which(WNV_occ_env_month$occ == 0)
   m_ens_preds_cv_absences_month <- monthly_data[absences_month] 
   m_ens_boyce_cv_month  <- sfbi(m_ens_preds_cv_presences_month, m_ens_preds_cv_absences_month, ktry = 10) 
-  boyce_index_m_ens_month <- m_ens_boyce_cv_month[6]
+  m_ens_boyce_cv_month[6]
+  }, error = function(e) {
+    message(paste("Error in month", m, "- assigning NA to Boyce index"))
+    NA
+  })
   
   # Add the Boyce index to the performance metrics data frame
   m_ens_perf_cv_month$Boyce <- boyce_index_m_ens_month
   
+  # Add the information of the respective month to performance data frame
+  m_ens_perf_cv_month <- m_ens_perf_cv_month %>%
+    mutate(Month = m) %>%
+    relocate(Month, .before = 1)
   
-  # Save the data frame with performance measures
-  save(m_ens_perf_cv_month,  file = paste0("output_data/validation/WNV_monthly_validation_",m,".RData"))
+  # Bind monthly performance to results data frame
+  WNV_monthly_validation <- rbind(WNV_monthly_validation, m_ens_perf_cv_month)
   
   
 } # Close the loop over all months
+
+
+# Save the data frame containing monthly performance measures
+save(WNV_monthly_validation,  file = "output_data/validation/WNV_monthly_validation.RData")
+
+
 
 
 
@@ -521,11 +559,12 @@ save(WNV_response_data, file = "output_data/validation/WNV_response_data.RData")
 
 
 
+
 #-------------------------------------------------------------------------------
 
 # 5. Create scatterplot of cross-validated ensemble predictions ----------------
 
-# Create a vector caontaining all predictors
+# Create a vector containing all predictors
 my_preds_all <- unique(unlist(my_preds_list))
 
 # Rename datat frame containing the occurrence points and corresponding
@@ -556,3 +595,5 @@ for (p in my_preds_all) { # Loop through all predictor variables
   
   
 } # Close the loop over predictors
+
+

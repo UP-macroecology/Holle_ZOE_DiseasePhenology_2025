@@ -1,25 +1,37 @@
 # ZOE project 
-# Disease phenology analysis of TBE in Europe 
+
+
+#-------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------- #
-#                          09a. Model fitting                            #
+#                       09a. Model fitting - TBE                         #
 # ---------------------------------------------------------------------- #
+
+# What is done within this script:
+
+# In a first step, we create a balanced data set of thinned presences and absences.
+# In a second step, we identify the most important and weakly correlated 
+# predictor variables to include in model construction. Because the
+# temperature variables (tas, tasmin, tasmax) are highly correlated, they are 
+# excluded from the model selection process and later used to create three
+# different predictor sets on which the final models are built. Models are built
+# using four different algorithms: Generalised Linear Model (GLM), Generalised 
+# Additive Model (GAM), Random Forest (RF), and Boosted Regression Tree (BRT).
 
 
 # Load needed packages
-library(mgcv)
-library(maxnet)
-library(randomForest)
-library(gbm)
-library(dismo)
-library(tidyverse)
-library(corrplot)
+library(mgcv) # mgcv_1.8-42
+library(randomForest) # randomForest_4.7-1.1
+library(gbm) # gbm_2.1.8.1
+library(dismo) # dismo_1.3-14 
+library(tidyverse) # tidyverse_2.0.0
+library(corrplot) # corrplot_0.92
+library(sf) # sf_1.0-16
 
 # Load needed objects
 source("scripts/00_functions.R") # Get the select07_cv function (explained deviance function)
 
-
-# Read in presence and background data
+# Read in presence and absence data
 load("output_data/data/TBE_occ_env.RData")
 
 
@@ -47,7 +59,10 @@ for (y in years) { # Start the loop over the years
     print(m)
     
     # Create a subset of occurrence per month and year
-    subset_month_year <- subset(TBE_occ_env, TBE_occ_env$year == y & TBE_occ_env$month == m)
+    subset_month_year <- TBE_occ_env[
+      TBE_occ_env$year == y & 
+        TBE_occ_env$month == m, 
+    ]
     
     # Retain the rows containing presences
     presences <- subset_month_year[subset_month_year$occ == 1, ]
@@ -72,22 +87,37 @@ for (y in years) { # Start the loop over the years
 # Replace original occurrence data frame with subsetted data frame
 TBE_occ_env <- TBE_occ_env_subset 
 
-# Map the thinned presences and background data with balanced ratio
-png("output_data/plots/presence_background/TBE_presence_absence.png", width = 2000, height = 2000, res = 300)
-
-
-maps::map('world',xlim=c(-31,40), ylim=c(34,72))
-points(TBE_occ_env$lon[TBE_occ_env$occ == 0], TBE_occ_env$lat[TBE_occ_env$occ == 0], col='steelblue4',  pch=19, cex = 0.5)
-points(TBE_occ_env$lon[TBE_occ_env$occ == 1], TBE_occ_env$lat[TBE_occ_env$occ == 1], col='goldenrod',  pch=19, cex = 0.5)
-legend(title = "TBE:", x = -25, y = 50, legend = c("Absence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
-
-dev.off()
 
 
 
 #-------------------------------------------------------------------------------
 
-# 2. Variable selection --------------------------------------------------------
+# 2. Visualise thinned presences and absences ----------------------------------
+
+# Map the thinned presences and absence data with balanced ratio
+png("output_data/plots/presence_background/TBE_presence_absence.png", width = 2000, height = 2000, res = 300)
+
+
+maps::map('world',xlim=c(-31,40), ylim=c(34,72), 
+          col = "gray97",
+          fill = TRUE,
+          border = "gray30")
+
+maps::map.axes(cex.axis = 0.75)
+
+points(TBE_occ_env$lon[TBE_occ_env$occ == 0], TBE_occ_env$lat[TBE_occ_env$occ == 0], col='steelblue4',  pch=19, cex = 0.5)
+points(TBE_occ_env$lon[TBE_occ_env$occ == 1], TBE_occ_env$lat[TBE_occ_env$occ == 1], col='goldenrod',  pch=19, cex = 0.5)
+
+legend(title = "TBE:", x = -28, y = 50, legend = c("Absence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
+
+dev.off()
+
+
+
+
+#-------------------------------------------------------------------------------
+
+# 3. Variable selection --------------------------------------------------------
 
 # Retrieve predictors (excluding predictors related to temperature, as we will include
 # all of these in different models, because tmin, tmean, and tmax might be more relevant
@@ -124,7 +154,11 @@ my_preds_list <- list(tas_mypreds = c(my_preds, "tas"), tasmin_mypreds = c(my_pr
 
 #-------------------------------------------------------------------------------
 
-# 3. Model fitting -------------------------------------------------------------
+# 4. Model fitting -------------------------------------------------------------
+# Fit models based on four different algorithms
+
+
+# (a) Generalised linear models ------------------------------------------------
 
 # Fit GLM (including linear and quadratic terms, AIC-based stepwise variable selection, but making sure 
 # that the main vector species is included as linear term in the final model)
@@ -161,6 +195,8 @@ names(models_glm) <- sapply(my_preds_list, paste, collapse = "+")
 
 
 
+# (b) Generalised additive models ----------------------------------------------
+
 # Fit GAM (cubic smoothing splines) for all three predictor sets
 print("GAM")
 
@@ -183,6 +219,8 @@ names(models_gam) <- sapply(my_preds_list, paste, collapse = "+")
 
 
 
+# (c) Random forests -----------------------------------------------------------
+
 # Fit RF for all three predictor sets
 print("RF")
 
@@ -204,6 +242,8 @@ for (m in seq_along(my_preds_list)) { # Start the loop over the three different 
 names(models_rf) <- sapply(my_preds_list, paste, collapse = "+")
 
 
+
+# (d) Boosted regression trees -------------------------------------------------
 
 # Fit BRT (adaptable learning rate to fit model between 1000 and 5000 trees)
 # for all three predictor sets
@@ -241,7 +281,8 @@ names(models_brt) <- sapply(my_preds_list, paste, collapse = "+")
 
 
 
-# Save the models
+# (e) # Save the models --------------------------------------------------------
+
 save(models_glm, models_gam, models_rf, models_brt, predictors, my_preds_list, TBE_occ_env, weights,
      file = "output_data/models/TBE_SDMs.RData")
 

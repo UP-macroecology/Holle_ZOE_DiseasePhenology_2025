@@ -1,22 +1,40 @@
 # ZOE project 
-# Disease phenology analysis of TBE in Europe 
+
+
+#-------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------- #
-#                   07a. TBE infection data preparation                  #
+#                   07a. Infection data preparation - TBE                #
 # ---------------------------------------------------------------------- #
 
+# What is done within this script:
+
+# We process locally acquired, confirmed TBE cases in Europe (provided by TESSy/ECDC)
+# to generate spatially explicit infection data. This is done by rasterising
+# the European NUTS3 municipalities to the target spatial resolution of 0.5° and
+# extracting the central coordinates of municipalities with observed infections. 
+# For NUTS3 municipalities that consist of only one cell after rasterisation, 
+# these coordinates are used as the final location for the infection data point.
+# In cases where NUTS3 municipalities are too small to be represented by a 0.5°
+# cell in the rasterisation process but had reported TBE infections, their 
+# central coordinates are likewise considered as the infection data point.
+# Infection records stemming from large NUTS3 municipalities spanning more than 
+# one cell are excluded to minimise the spatial uncertainty of infection locations.
+# Finally, we examine which countries provided information on TBE infections
+# and identify those reporting at the NUTS3 level. This is important for generating
+# the background dataset in script 08a.
 
 
 # Load needed packages
-library(giscoR)
-library(terra)
-library(ggplot2)
-library(tidyverse)
-library(sf)
-library(countrycode)
+library(giscoR) # giscoR_0.6.0
+library(terra) # terra_1.7-55
+library(ggplot2) # ggplot2_4.0.0
+library(tidyverse) # tidyverse_2.0.0
+library(sf) # sf_1.0-16
+library(countrycode) # countrycode_1.6.0
 
 # Load needed data
-europe_mask_50km <- terra::rast("input_data/spatial_data/europe_mask_50km.tif") # 50 km raster template of Europe
+europe_mask <- terra::rast("input_data/spatial_data/europe_mask.tif") # 0.5° raster template of Europe
 TBE_infection_data <- read.csv("input_data/raw_infection_data/TBE.csv") # TBE infection data provided by ECDC/TESSy
 
 
@@ -28,6 +46,7 @@ TBE_infection_data <- read.csv("input_data/raw_infection_data/TBE.csv") # TBE in
 # ECDC human case infection data is provided at the NUTS3 level,
 # Retain a map showing the European municipalities on NUTS 3 level (year 2021)
 # (As we use data until 2019; UK was still reporting surveillance data to ECDC)
+# "4326": WGS84
 nuts_3 <- gisco_get_nuts(
   year = "2021",
   epsg = "4326",
@@ -43,10 +62,10 @@ nuts_3 <- gisco_get_nuts(
 )
 
 # Rasterise the NUTS3 multipolygon and mask the values that do not belong to the European continent
-nuts_3_raster <- terra::rasterize(nuts_3, europe_mask_50km, field = "NUTS_ID", touches = TRUE)
-nuts_3_raster_mask <- terra::mask(nuts_3_raster, europe_mask_50km)
+nuts_3_raster <- terra::rasterize(nuts_3, europe_mask, field = "NUTS_ID", touches = TRUE)
+nuts_3_raster_mask <- terra::mask(nuts_3_raster, europe_mask)
 
-# Store the raster map of nuts 3 municipalities for later usage during background data generation
+# Store the raster map of nuts 3 municipalities for later usage (during background data generation)
 writeRaster(nuts_3_raster_mask, "input_data/spatial_data/nuts_3_raster_mask.tif", overwrite = TRUE)
 
 # Count the number of raster cells for each nuts3 municipality
@@ -58,9 +77,9 @@ cell_counts_nuts_3 <- terra::freq(nuts_3_raster_mask) %>%
 nuts_3 <- nuts_3 %>%
   left_join(cell_counts_nuts_3, by = "NUTS_ID")
 
-# Rasterise the cell count into the 50km raster and mask values based on raster template
-nuts_3_cell_count <- terra::rasterize(nuts_3, europe_mask_50km, field = "num_cells", touches = TRUE)
-nuts_3_cell_count <- terra::mask(nuts_3_cell_count, europe_mask_50km)
+# Rasterise the cell count into the 0.5° raster and mask values based on raster template
+nuts_3_cell_count <- terra::rasterize(nuts_3, europe_mask, field = "num_cells", touches = TRUE)
+nuts_3_cell_count <- terra::mask(nuts_3_cell_count, europe_mask)
 
 # Convert raster to data frame for ggplot2 visualization
 nuts_3_cell_count_df <- as.data.frame(nuts_3_cell_count, xy = TRUE, na.rm = TRUE)
@@ -68,7 +87,7 @@ nuts_3_cell_count_df <- as.data.frame(nuts_3_cell_count, xy = TRUE, na.rm = TRUE
 # Plot the raster showing the number of cells within a NUTS3 municipality (uncertainty)
 ggplot(nuts_3_cell_count_df, aes(x = x, y = y, fill = num_cells)) +
   geom_tile() +
-  scale_fill_viridis_c(name = "Cell count per NUTS3\nmunicipality (50km resolution)", option = "viridis") +
+  scale_fill_viridis_c(name = "Cell count per NUTS3\nmunicipality (0.5° resolution)", option = "viridis") +
   theme_minimal() +
   labs(
     title = "Uncertainty of ECDC infection data on NUTS3 level",
@@ -131,8 +150,8 @@ nuts_3_TBE$y <- st_coordinates(nuts_3_TBE$centroid)[, 2]
 nuts_3_TBE <- nuts_3_TBE %>%
   distinct(NUTS_ID, DateUsedForStatisticsMonth, DateUsedForStatisticsYear, .keep_all = TRUE)
 
-# For each infection entry, check the number of 50 km cells within the reporting
-# municipality. If the NUTS 3 municipality consists of more than one 50 km cell, 
+# For each infection entry, check the number of 0.5° cells within the reporting
+# municipality. If the NUTS 3 municipality consists of more than one 0.5° cell, 
 # randomly select one cell within the municipality, extract their central 
 # x and y coordinate and fill this information into the data frame
 for (i in 1:nrow(nuts_3_TBE)) { # Start of the loop over all rows
@@ -174,7 +193,7 @@ save(nuts_3_TBE, file = "output_data/data/nuts_3_TBE.RData")
 # Remove entries that stem from municipalities that consist of more than one cell
 # as this increases the uncertainty of the reported location (keep entries with
 # NA values as these belong to NUTS3 municipalities that were too small to be
-# rasterised with a 50 km resolution)
+# rasterised with a 0.5° resolution)
 nuts_3_TBE_filtered <- nuts_3_TBE[nuts_3_TBE$num_cells <= 1 | is.na(nuts_3_TBE$num_cells), ]
 
 # Select only relevant columns of the data frame
@@ -192,14 +211,19 @@ colnames(TBE_occurrences) <- c("occ_id", "lon", "lat", "year", "month", "NUTS_ID
 TBE_occurrences$occ <- 1
 
 # Convert the occurrence data frame to a spatial object
-TBE_occurrences_sp <- st_as_sf(TBE_occurrences, coords = c("lon", "lat"), crs = st_crs(europe_mask_50km))
+TBE_occurrences_sp <- st_as_sf(TBE_occurrences, coords = c("lon", "lat"), crs = st_crs(europe_mask))
 
 # Extract raster values at the coordinate locations
-occurrences_values <- terra::extract(europe_mask_50km, TBE_occurrences_sp)
+occurrences_values <- terra::extract(europe_mask, TBE_occurrences_sp)
 
 # Only keep the occurrences where the values is 1 (meaning that it lays on the European continent)
 TBE_occurrences_cleaned <- TBE_occurrences[!is.na(occurrences_values[,"layer"]) & occurrences_values[,"layer"] == 1, ]
 
+
+
+#-------------------------------------------------------------------------------
+
+# 3. Visualisation of processed TBE infection data -----------------------------
 
 # Plot the extracted infection occurrences
 ggplot(nuts_3_cell_count_df, aes(x = x, y = y, fill = num_cells)) +
@@ -222,6 +246,10 @@ ggplot(nuts_3_cell_count_df, aes(x = x, y = y, fill = num_cells)) +
 
 
 
+#-------------------------------------------------------------------------------
+
+# 4. Save processed TBE infection data -----------------------------------------
+
 # Save the data frame with occurrence points
 save(TBE_occurrences_cleaned, file = "output_data/data/TBE_occurrences_cleaned.RData")
 
@@ -229,7 +257,7 @@ save(TBE_occurrences_cleaned, file = "output_data/data/TBE_occurrences_cleaned.R
 
 #-------------------------------------------------------------------------------
 
-# 3. Check countries that provided infection data ------------------------------
+# 5. Check countries that provided infection data ------------------------------
 
 # Create a vector containing all reporting countries
 reporting_countries <- unique(TBE_infection_data$ReportingCountry)
@@ -237,3 +265,36 @@ reporting_countries <- unique(TBE_infection_data$ReportingCountry)
 # Get the country names based on ISO 2-Letter Code
 reporting_countries_full <- countrycode(reporting_countries, origin = "iso2c", destination = "country.name")
 print(reporting_countries_full)
+
+
+
+#-------------------------------------------------------------------------------
+
+# 6. Check NUTS3-level reportings ----------------------------------------------
+
+# Add a column for code length and inferred NUTS level to original data frame
+# with reported infections
+TBE_infection_data_NUTS_check <- TBE_infection_data %>%
+  mutate(
+    nuts_length = nchar(NUTS_ID),
+    country_code = substr(NUTS_ID, 1, 2),
+    level = case_when(
+      nuts_length == 2 ~ "Country",
+      nuts_length == 3 ~ "NUTS1",
+      nuts_length == 4 ~ "NUTS2",
+      nuts_length == 5 ~ "NUTS3",
+      TRUE ~ "Other"
+    )
+  )
+
+# Summarise which countries did not report at NUTS3
+countries_not_nuts3 <- TBE_infection_data_NUTS_check %>%
+  group_by(country_code) %>%
+  summarise(
+    reported_levels = paste(unique(level), collapse = ", "),
+    reported_nuts3 = "NUTS3" %in% level
+  ) %>%
+  filter(!reported_nuts3)
+
+print(countries_not_nuts3)
+

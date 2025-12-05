@@ -3,24 +3,36 @@
 #-------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------- #
-#                   14. Trends of main climate regions                   #
+#           15. Decadal trends of major European climate regions         #
 # ---------------------------------------------------------------------- #
 
+# What is done within this script:
+
+# We calculate and visualise the decadal trends in the timing of mean and peak
+# vector and virus suitability throughout the year for three different decades 
+# (1970s, 2010s, 2050s), separately for the major Köppen-Geiger climate classes 
+# (Arid, Temperate, Continental, and Polar). Historical predictions are based on 
+# factual climate and land-use changes, while future predictions consider three
+# different socio-economic scenarios. As climate zones in Europe have shifted 
+# over the past decades, we use the Köppen-Geiger classification map corresponding
+# to each target decade.
+
+
 # Load needed packages
-library(terra)
-library(tidyverse)
-library(ggplot2)
-library(ggh4x)
+library(terra) # terra_1.7-55
+library(tidyverse) # tidyverse_2.0.0
+library(ggplot2) # ggplot2_4.0.0
+library(ggh4x) # ggh4x_0.3.1
 
 # Load needed data
-europe_mask_50km <- terra::rast("input_data/spatial_data/europe_mask_50km.tif")
+europe_mask <- terra::rast("input_data/spatial_data/europe_mask.tif")
 
 
 
 
 #-------------------------------------------------------------------------------
 
-# 1. Prepare raster of main climate regions in Europe --------------------------
+# 1. Prepare rasters of main climate regions in Europe -------------------------
 
 # Source: 
 # https://www.gloh2o.org/koppen/
@@ -33,57 +45,46 @@ europe_mask_50km <- terra::rast("input_data/spatial_data/europe_mask_50km.tif")
 
 # a) Historical climate regions (two time frames) ------------------------------
 
-# Load the raster of main climate regions in Europe in a resolution of 50 km
+# Load the raster of main climate regions in Europe (resolution of 0.5°)
 # for two different time frames that cover our historical predictions
 clim_world_1991_2020 <- terra::rast("input_data/spatial_data/climate_regions/koppen_geiger_0p5_1991_2020.tif")
 clim_world_1961_1990 <- terra::rast("input_data/spatial_data/climate_regions/koppen_geiger_0p5_1961_1990.tif")
 
 # Clip the map extent to Europe
-clim_eur_1991_2020 <- terra::mask(crop(clim_world_1991_2020, europe_mask_50km), europe_mask_50km)
-clim_eur_1961_1990 <- terra::mask(crop(clim_world_1961_1990, europe_mask_50km), europe_mask_50km)
+clim_eur_1991_2020 <- terra::mask(crop(clim_world_1991_2020, europe_mask), europe_mask)
+clim_eur_1961_1990 <- terra::mask(crop(clim_world_1961_1990, europe_mask), europe_mask)
 
 # Check unique climate class values in Europe
 unique_vals_1 <- unique(values(clim_eur_1991_2020))
 unique_vals_2 <- unique(values(clim_eur_1961_1990))
 
-# Define class labels based on the climate zone values
+# Define class labels based on the climate zone values (info can be found in the
+# legend.txt file)
 # 1991 - 2020
-labels_1991_2020 <- data.frame(value = c(4, 6, 7, 8, 9, 14, 15, 16, 17, 18, 25, 26, 27, 29),
-                     # main_climate = c("Dry", "Dry", "Dry", "Temperate", "Temperate",
-                     #                  "Temperate", "Temperate", "Temperate", "Continental",
-                     #                  "Continental", "Continental", "Continental", 
-                     #                  "Continental", "Polar"),
-                     # main_climate_sub = c("Dry; Hot desert", "Dry; Hot semi-arid", "Dry; Cold semi-arid",
-                     #                      "Temperate; Hot-summer Mediterranean", "Temperate; Warm-summer Mediterranean",
-                     #                      "Temperate; Humid subtropical", "Temperate; oceanic/subtropical highland",
-                     #                      "Temperate; subpolar oceanic", "Continental; Hot-summer Mediterranean",
-                     #                      "Continental; Warm-summer Mediterranean", "Continental; Hot-summer humid",
-                     #                      "Continental: Warm-summer humid", "Continental; Subarctic", "Polar; Tundra"))
-                     main_climate_sub_imp = c("Dry", "Dry", "Dry", "Temperate; Mediterranean", "Temperate; Mediterranean",
-                                              "Temperate; Humid subtropical", "Temperate; Oceanic", "Temperate; Subpolar oceanic",
-                                              "Continental; Mediterranean", "Continental; Mediterranean", "Continental; Humid",
-                                              "Continental; Humid", "Continental; Subarctic", "Polar"))
+labels_1991_2020 <- data.frame(value = c(4, 6, 7, 8, 9, 14, 15, 16, 
+                                         17, 18, 25, 26, 27, 29),
+                               main_climate_sub_imp = c("Arid", "Arid", "Arid", 
+                                                        "Temperate; Mediterranean", "Temperate; Mediterranean", 
+                                                        "Temperate; Humid subtropical", "Temperate; Oceanic", 
+                                                        "Temperate; Subpolar oceanic","Continental; Mediterranean", 
+                                                        "Continental; Mediterranean", "Continental; Humid", 
+                                                        "Continental; Humid", "Continental; Subarctic", 
+                                                        "Polar"))
 
 
 # Assign labels 
 levels(clim_eur_1991_2020) <- labels_1991_2020
 
 # 1961 - 1990
-labels_1961_1990 <- data.frame(value = c(5, 6, 7, 8, 9, 14, 15, 16, 17, 18, 25, 26, 27, 29),
-                               # main_climate = c("Dry", "Dry", "Dry", "Temperate", "Temperate",
-                               #                  "Temperate", "Temperate", "Temperate", "Continental",
-                               #                  "Continental", "Continental", "Continental", 
-                               #                  "Continental", "Polar"),
-                               # main_climate_sub = c("Dry; Hot desert", "Dry; Hot semi-arid", "Dry; Cold semi-arid",
-                               #                      "Temperate; Hot-summer Mediterranean", "Temperate; Warm-summer Mediterranean",
-                               #                      "Temperate; Humid subtropical", "Temperate; oceanic/subtropical highland",
-                               #                      "Temperate; subpolar oceanic", "Continental; Hot-summer Mediterranean",
-                               #                      "Continental; Warm-summer Mediterranean", "Continental; Hot-summer humid",
-                               #                      "Continental: Warm-summer humid", "Continental; Subarctic", "Polar; Tundra"))
-                               main_climate_sub_imp = c("Dry", "Dry", "Dry", "Temperate; Mediterranean", "Temperate; Mediterranean",
-                                                        "Temperate; Humid subtropical", "Temperate; Oceanic", "Temperate; Subpolar oceanic",
-                                                        "Continental; Mediterranean", "Continental; Mediterranean", "Continental; Humid",
-                                                        "Continental; Humid", "Continental; Subarctic", "Polar"))
+labels_1961_1990 <- data.frame(value = c(5, 6, 7, 8, 9, 14, 15, 16, 
+                                         17, 18, 25, 26, 27, 29),
+                               main_climate_sub_imp = c("Arid", "Arid", "Arid", 
+                                                        "Temperate; Mediterranean", "Temperate; Mediterranean",
+                                                        "Temperate; Humid subtropical", "Temperate; Oceanic", 
+                                                        "Temperate; Subpolar oceanic", "Continental; Mediterranean", 
+                                                        "Continental; Mediterranean", "Continental; Humid",
+                                                        "Continental; Humid", "Continental; Subarctic", 
+                                                        "Polar"))
 
 
 # Assign labels 
@@ -93,7 +94,7 @@ levels(clim_eur_1961_1990) <- labels_1961_1990
 
 # b) Future climate regions (one time frame, three ssp) ------------------------
 
-# Load the raster of main climate regions in Europe in a resolution of 50 km
+# Load the raster of main climate regions in Europe in a resolution of 0.5°
 # for one time frame that covers our future predictions and for three different
 # climate scenarios
 clim_world_2041_2070_ssp126 <- terra::rast("input_data/spatial_data/climate_regions/koppen_geiger_0p5_2041_2070_ssp126.tif")
@@ -101,9 +102,9 @@ clim_world_2041_2070_ssp370 <- terra::rast("input_data/spatial_data/climate_regi
 clim_world_2041_2070_ssp585 <- terra::rast("input_data/spatial_data/climate_regions/koppen_geiger_0p5_2041_2070_ssp585.tif")
 
 # Clip the map extent to Europe
-clim_eur_2041_2070_ssp126 <- terra::mask(crop(clim_world_2041_2070_ssp126, europe_mask_50km), europe_mask_50km)
-clim_eur_2041_2070_ssp370 <- terra::mask(crop(clim_world_2041_2070_ssp370, europe_mask_50km), europe_mask_50km)
-clim_eur_2041_2070_ssp585 <- terra::mask(crop(clim_world_2041_2070_ssp585, europe_mask_50km), europe_mask_50km)
+clim_eur_2041_2070_ssp126 <- terra::mask(crop(clim_world_2041_2070_ssp126, europe_mask), europe_mask)
+clim_eur_2041_2070_ssp370 <- terra::mask(crop(clim_world_2041_2070_ssp370, europe_mask), europe_mask)
+clim_eur_2041_2070_ssp585 <- terra::mask(crop(clim_world_2041_2070_ssp585, europe_mask), europe_mask)
 
 # Check unique climate class values in Europe
 unique_vals_ssp126 <- unique(values(clim_eur_2041_2070_ssp126))
@@ -121,7 +122,7 @@ levels(clim_eur_2041_2070_ssp585) <- labels_1991_2020
 
 #-------------------------------------------------------------------------------
 
-# 2. Calculate past trends of main climatic regions ----------------------------
+# 2. Calculate past trends across main climatic regions ------------------------
 # for main vectors as well as viruses
 # focusing on the decades 1970s and 2010s
 
@@ -130,18 +131,18 @@ levels(clim_eur_2041_2070_ssp585) <- labels_1991_2020
 
 # Load the needed data - postprocessed monthly continuous predictions of the main 
 # vectors and their associated viruses for the years 1970 to 2019 under factual 
-# climate and land use change)
+# climate and land use change
 # Ixodes ricinus
-I_ricinus_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_landuse_ens_1970_2019.tif")
+I_ricinus_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_1970_2019.tif")
 
 # Culex pipiens
-C_pipiens_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_landuse_ens_1970_2019.tif")
+C_pipiens_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_landuse_ens_1970_2019.tif")
 
 # TBE
-TBE_occ_prob_clim_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE_preds_clim_ens_1970_2019.tif")
+TBE_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_landuse_ens_1970_2019.tif")
 
 # WNV
-WNV_occ_prob_clim_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV_preds_clim_ens_1970_2019.tif")
+WNV_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_landuse_ens_1970_2019.tif")
 
 
 
@@ -152,14 +153,14 @@ WNV_occ_prob_clim_ens <- terra::rast("output_data/results/postprocessed_predicti
 dates_past <- seq(as.Date("1970-01-01"), as.Date("2019-12-01"), by = "month")
 names(I_ricinus_occ_prob_clim_landuse_ens) <- dates_past
 names(C_pipiens_occ_prob_clim_landuse_ens) <- dates_past
-names(TBE_occ_prob_clim_ens) <- dates_past
-names(WNV_occ_prob_clim_ens) <- dates_past
+names(TBE_occ_prob_clim_landuse_ens) <- dates_past
+names(WNV_occ_prob_clim_landuse_ens) <- dates_past
 
 # Convert raster stack to a data frame
 I_ricinus_occ_prob_clim_landuse_ens_df <- as.data.frame(I_ricinus_occ_prob_clim_landuse_ens, xy = TRUE)
 C_pipiens_occ_prob_clim_landuse_ens_df <- as.data.frame(C_pipiens_occ_prob_clim_landuse_ens, xy = TRUE)
-TBE_occ_prob_clim_ens_df <- as.data.frame(TBE_occ_prob_clim_ens, xy = TRUE)
-WNV_occ_prob_clim_ens_df <- as.data.frame(WNV_occ_prob_clim_ens, xy = TRUE)
+TBE_occ_prob_clim_landuse_ens_df <- as.data.frame(TBE_occ_prob_clim_landuse_ens, xy = TRUE)
+WNV_occ_prob_clim_landuse_ens_df <- as.data.frame(WNV_occ_prob_clim_landuse_ens, xy = TRUE)
 
 # Reshape data to a long format
 I_ricinus_occ_prob_clim_landuse_ens_df_long <- I_ricinus_occ_prob_clim_landuse_ens_df %>%
@@ -182,7 +183,7 @@ C_pipiens_occ_prob_clim_landuse_ens_df_long <- C_pipiens_occ_prob_clim_landuse_e
          month = substring(date, 6, 7),
          decade = paste0((year %/% 10) * 10, "s")) 
 
-TBE_occ_prob_clim_ens_df_long <- TBE_occ_prob_clim_ens_df %>%
+TBE_occ_prob_clim_landuse_ens_df_long <- TBE_occ_prob_clim_landuse_ens_df %>%
   pivot_longer(
     cols = -c(x,y),
     names_to = "date",
@@ -192,7 +193,7 @@ TBE_occ_prob_clim_ens_df_long <- TBE_occ_prob_clim_ens_df %>%
          month = substring(date, 6, 7),
          decade = paste0((year %/% 10) * 10, "s")) 
 
-WNV_occ_prob_clim_ens_df_long <- WNV_occ_prob_clim_ens_df %>%
+WNV_occ_prob_clim_landuse_ens_df_long <- WNV_occ_prob_clim_landuse_ens_df %>%
   pivot_longer(
     cols = -c(x,y),
     names_to = "date",
@@ -219,17 +220,17 @@ C_pipiens_1970_1990 <- C_pipiens_occ_prob_clim_landuse_ens_df_long %>%
   filter(year >= 1970 & year <= 1990)
 
 # TBE
-TBE_1991_2019 <- TBE_occ_prob_clim_ens_df_long %>%
+TBE_1991_2019 <- TBE_occ_prob_clim_landuse_ens_df_long %>%
   filter(year >= 1991 & year <= 2019)
 
-TBE_1970_1990 <- TBE_occ_prob_clim_ens_df_long %>%
+TBE_1970_1990 <- TBE_occ_prob_clim_landuse_ens_df_long %>%
   filter(year >= 1970 & year <= 1990)
 
 # WNV
-WNV_1991_2019 <- WNV_occ_prob_clim_ens_df_long %>%
+WNV_1991_2019 <- WNV_occ_prob_clim_landuse_ens_df_long %>%
   filter(year >= 1991 & year <= 2019)
 
-WNV_1970_1990 <- WNV_occ_prob_clim_ens_df_long %>%
+WNV_1970_1990 <- WNV_occ_prob_clim_landuse_ens_df_long %>%
   filter(year >= 1970 & year <= 1990)
 
 # Convert the rasters containing the climate regions into a data frame
@@ -289,7 +290,7 @@ for (o in operations) { # Loop over the peak and mean functions
   
   print(o)
   
-  # Calculate the mean habitat suitability per biogeographic region
+  # Calculate the mean habitat suitability across Europe per climate region
   # for each month per year
   I_ricinus_summary <- I_ricinus_joined %>%
     group_by(clim_region, year, month) %>%
@@ -339,7 +340,8 @@ for (o in operations) { # Loop over the peak and mean functions
         year >= 2000 & year < 2010 ~ "2000s",
         year >= 2010 & year < 2020 ~ "2010s"))
   
-  # Keep summarising the data over the decade, month, and vector/virus per biogeographic region
+  # Keep summarising the data over the decade, month, and vector/virus per 
+  # climate region
   aggregated_df_past <- combined_df %>%
     group_by(clim_region, decade, month, species, scenario) %>%
     summarise(occ_probability = if (o == "Peak") quantile(mean_probability, 0.95, na.rm = TRUE)
@@ -365,7 +367,7 @@ for (o in operations) { # Loop over the peak and mean functions
                            NA_character_, month)) %>%
     filter(!is.na(month))
   
-  # Convert month values and latitudinal bands to factors for proper ordering in the plot
+  # Convert month values to factors for proper ordering in the plot
   aggregated_df_past <- aggregated_df_past %>%
     mutate(month = factor(month, levels = month.abb))
   
@@ -379,54 +381,55 @@ for (o in operations) { # Loop over the peak and mean functions
 
 #-------------------------------------------------------------------------------
 
-# 3. Calculate future trends of main climatic regions  -------------------------
+# 3. Calculate future trends across main climatic regions  ---------------------
 # for main vectors as well as viruses
 # focusing on the decade 2050s
 
 
 # a) Load data -----------------------------------------------------------------
 
-# Load needed data - postprocessed monthly predicted ensemble occurrence probabilities 
-# of main vectors and the respective viruses, under climate and land use change for the
-# future years 2030 to 2070 based and three studied environmental scenarios
+# Load needed data - post-processed monthly predicted ensemble occurrence 
+# probabilities of main vectors and the respective viruses, under climate and
+# land-use change for the future years 2020 to 2059 based and three 
+# studied socio-economic scenarios
 # Ixodes ricinus; ssp126, ssp370, and ssp585
-I_ricinus_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_landuse_ens_2030_2070_ssp126.tif"))
-I_ricinus_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_landuse_ens_2030_2070_ssp370.tif"))
-I_ricinus_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_landuse_ens_2030_2070_ssp585.tif"))
+I_ricinus_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_2020_2059_ssp126.tif"))
+I_ricinus_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_2020_2059_ssp370.tif"))
+I_ricinus_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_2020_2059_ssp585.tif"))
 
 # Culex pipiens; ssp126, ssp370, and ssp585
-C_pipiens_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_landuse_ens_2030_2070_ssp126.tif"))
-C_pipiens_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_landuse_ens_2030_2070_ssp370.tif"))
-C_pipiens_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_landuse_ens_2030_2070_ssp585.tif"))
+C_pipiens_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_landuse_ens_2020_2059_ssp126.tif"))
+C_pipiens_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_landuse_ens_2020_2059_ssp370.tif"))
+C_pipiens_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_landuse_ens_2020_2059_ssp585.tif"))
 
 # TBE; ssp126, ssp370, and ssp585
-TBE_occ_prob_clim_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE_preds_clim_ens_2030_2070_ssp126.tif"))
-TBE_occ_prob_clim_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE_preds_clim_ens_2030_2070_ssp370.tif"))
-TBE_occ_prob_clim_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE_preds_clim_ens_2030_2070_ssp585.tif"))
+TBE_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_landuse_ens_2020_2059_ssp126.tif"))
+TBE_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_landuse_ens_2020_2059_ssp370.tif"))
+TBE_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_landuse_ens_2020_2059_ssp585.tif"))
 
 # WNV; ssp126, ssp370, and ssp585
-WNV_occ_prob_clim_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV_preds_clim_ens_2030_2070_ssp126.tif"))
-WNV_occ_prob_clim_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV_preds_clim_ens_2030_2070_ssp370.tif"))
-WNV_occ_prob_clim_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV_preds_clim_ens_2030_2070_ssp585.tif"))
+WNV_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_landuse_ens_2020_2059_ssp126.tif"))
+WNV_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_landuse_ens_2020_2059_ssp370.tif"))
+WNV_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_landuse_ens_2020_2059_ssp585.tif"))
 
 
 
 # b) Calculate occurrence probabilities per climate region ---------------------
 
 # Generate future time information and assign dates as layer names
-dates_future <- seq(as.Date("2030-01-01"), as.Date("2070-12-01"), by = "month")
+dates_future <- seq(as.Date("2020-01-01"), as.Date("2059-12-01"), by = "month")
 names(I_ricinus_occ_prob_clim_landuse_ens_fut_ssp126) <- dates_future
 names(I_ricinus_occ_prob_clim_landuse_ens_fut_ssp370) <- dates_future
 names(I_ricinus_occ_prob_clim_landuse_ens_fut_ssp585) <- dates_future
 names(C_pipiens_occ_prob_clim_landuse_ens_fut_ssp126) <- dates_future
 names(C_pipiens_occ_prob_clim_landuse_ens_fut_ssp370) <- dates_future
 names(C_pipiens_occ_prob_clim_landuse_ens_fut_ssp585) <- dates_future
-names(TBE_occ_prob_clim_ens_fut_ssp126) <- dates_future
-names(TBE_occ_prob_clim_ens_fut_ssp370) <- dates_future
-names(TBE_occ_prob_clim_ens_fut_ssp585) <- dates_future
-names(WNV_occ_prob_clim_ens_fut_ssp126) <- dates_future
-names(WNV_occ_prob_clim_ens_fut_ssp370) <- dates_future
-names(WNV_occ_prob_clim_ens_fut_ssp585) <- dates_future
+names(TBE_occ_prob_clim_landuse_ens_fut_ssp126) <- dates_future
+names(TBE_occ_prob_clim_landuse_ens_fut_ssp370) <- dates_future
+names(TBE_occ_prob_clim_landuse_ens_fut_ssp585) <- dates_future
+names(WNV_occ_prob_clim_landuse_ens_fut_ssp126) <- dates_future
+names(WNV_occ_prob_clim_landuse_ens_fut_ssp370) <- dates_future
+names(WNV_occ_prob_clim_landuse_ens_fut_ssp585) <- dates_future
 
 
 # Convert raster stack to a data frame
@@ -438,13 +441,13 @@ C_pipiens_occ_prob_clim_landuse_ens_fut_df_ssp126 <- as.data.frame(C_pipiens_occ
 C_pipiens_occ_prob_clim_landuse_ens_fut_df_ssp370 <- as.data.frame(C_pipiens_occ_prob_clim_landuse_ens_fut_ssp370, xy = TRUE)
 C_pipiens_occ_prob_clim_landuse_ens_fut_df_ssp585 <- as.data.frame(C_pipiens_occ_prob_clim_landuse_ens_fut_ssp585, xy = TRUE)
 
-TBE_occ_prob_clim_ens_fut_df_ssp126 <- as.data.frame(TBE_occ_prob_clim_ens_fut_ssp126, xy = TRUE)
-TBE_occ_prob_clim_ens_fut_df_ssp370 <- as.data.frame(TBE_occ_prob_clim_ens_fut_ssp370, xy = TRUE)
-TBE_occ_prob_clim_ens_fut_df_ssp585 <- as.data.frame(TBE_occ_prob_clim_ens_fut_ssp585, xy = TRUE)
+TBE_occ_prob_clim_landuse_ens_fut_df_ssp126 <- as.data.frame(TBE_occ_prob_clim_landuse_ens_fut_ssp126, xy = TRUE)
+TBE_occ_prob_clim_landuse_ens_fut_df_ssp370 <- as.data.frame(TBE_occ_prob_clim_landuse_ens_fut_ssp370, xy = TRUE)
+TBE_occ_prob_clim_landuse_ens_fut_df_ssp585 <- as.data.frame(TBE_occ_prob_clim_landuse_ens_fut_ssp585, xy = TRUE)
 
-WNV_occ_prob_clim_ens_fut_df_ssp126 <- as.data.frame(WNV_occ_prob_clim_ens_fut_ssp126, xy = TRUE)
-WNV_occ_prob_clim_ens_fut_df_ssp370 <- as.data.frame(WNV_occ_prob_clim_ens_fut_ssp370, xy = TRUE)
-WNV_occ_prob_clim_ens_fut_df_ssp585 <- as.data.frame(WNV_occ_prob_clim_ens_fut_ssp585, xy = TRUE)
+WNV_occ_prob_clim_landuse_ens_fut_df_ssp126 <- as.data.frame(WNV_occ_prob_clim_landuse_ens_fut_ssp126, xy = TRUE)
+WNV_occ_prob_clim_landuse_ens_fut_df_ssp370 <- as.data.frame(WNV_occ_prob_clim_landuse_ens_fut_ssp370, xy = TRUE)
+WNV_occ_prob_clim_landuse_ens_fut_df_ssp585 <- as.data.frame(WNV_occ_prob_clim_landuse_ens_fut_ssp585, xy = TRUE)
 
 
 # Reshape data to a long format
@@ -508,7 +511,7 @@ C_pipiens_occ_prob_clim_landuse_ens_fut_df_long_ssp585 <- C_pipiens_occ_prob_cli
          month = substring(date, 6, 7),
          decade = paste0((year %/% 10) * 10, "s")) 
 
-TBE_occ_prob_clim_ens_fut_df_long_ssp126 <- TBE_occ_prob_clim_ens_fut_df_ssp126 %>%
+TBE_occ_prob_clim_landuse_ens_fut_df_long_ssp126 <- TBE_occ_prob_clim_landuse_ens_fut_df_ssp126 %>%
   pivot_longer(
     cols = -c(x,y),
     names_to = "date",
@@ -518,7 +521,7 @@ TBE_occ_prob_clim_ens_fut_df_long_ssp126 <- TBE_occ_prob_clim_ens_fut_df_ssp126 
          month = substring(date, 6, 7),
          decade = paste0((year %/% 10) * 10, "s")) 
 
-TBE_occ_prob_clim_ens_fut_df_long_ssp370 <- TBE_occ_prob_clim_ens_fut_df_ssp370 %>%
+TBE_occ_prob_clim_landuse_ens_fut_df_long_ssp370 <- TBE_occ_prob_clim_landuse_ens_fut_df_ssp370 %>%
   pivot_longer(
     cols = -c(x,y),
     names_to = "date",
@@ -528,7 +531,7 @@ TBE_occ_prob_clim_ens_fut_df_long_ssp370 <- TBE_occ_prob_clim_ens_fut_df_ssp370 
          month = substring(date, 6, 7),
          decade = paste0((year %/% 10) * 10, "s")) 
 
-TBE_occ_prob_clim_ens_fut_df_long_ssp585 <- TBE_occ_prob_clim_ens_fut_df_ssp585 %>%
+TBE_occ_prob_clim_landuse_ens_fut_df_long_ssp585 <- TBE_occ_prob_clim_landuse_ens_fut_df_ssp585 %>%
   pivot_longer(
     cols = -c(x,y),
     names_to = "date",
@@ -538,7 +541,7 @@ TBE_occ_prob_clim_ens_fut_df_long_ssp585 <- TBE_occ_prob_clim_ens_fut_df_ssp585 
          month = substring(date, 6, 7),
          decade = paste0((year %/% 10) * 10, "s")) 
 
-WNV_occ_prob_clim_ens_fut_df_long_ssp126 <- WNV_occ_prob_clim_ens_fut_df_ssp126 %>%
+WNV_occ_prob_clim_landuse_ens_fut_df_long_ssp126 <- WNV_occ_prob_clim_landuse_ens_fut_df_ssp126 %>%
   pivot_longer(
     cols = -c(x,y),
     names_to = "date",
@@ -548,7 +551,7 @@ WNV_occ_prob_clim_ens_fut_df_long_ssp126 <- WNV_occ_prob_clim_ens_fut_df_ssp126 
          month = substring(date, 6, 7),
          decade = paste0((year %/% 10) * 10, "s")) 
 
-WNV_occ_prob_clim_ens_fut_df_long_ssp370 <- WNV_occ_prob_clim_ens_fut_df_ssp370 %>%
+WNV_occ_prob_clim_landuse_ens_fut_df_long_ssp370 <- WNV_occ_prob_clim_landuse_ens_fut_df_ssp370 %>%
   pivot_longer(
     cols = -c(x,y),
     names_to = "date",
@@ -558,7 +561,7 @@ WNV_occ_prob_clim_ens_fut_df_long_ssp370 <- WNV_occ_prob_clim_ens_fut_df_ssp370 
          month = substring(date, 6, 7),
          decade = paste0((year %/% 10) * 10, "s")) 
 
-WNV_occ_prob_clim_ens_fut_df_long_ssp585 <- WNV_occ_prob_clim_ens_fut_df_ssp585 %>%
+WNV_occ_prob_clim_landuse_ens_fut_df_long_ssp585 <- WNV_occ_prob_clim_landuse_ens_fut_df_ssp585 %>%
   pivot_longer(
     cols = -c(x,y),
     names_to = "date",
@@ -570,7 +573,7 @@ WNV_occ_prob_clim_ens_fut_df_long_ssp585 <- WNV_occ_prob_clim_ens_fut_df_ssp585 
 
 
 # Convert the rasters containing the climatic regions into a data frame
-# with coordinates (based on each environmental ssp scenario)
+# with coordinates (based on each socio-economic ssp scenario)
 df_clim_eur_2041_2070_ssp126 <- as.data.frame(clim_eur_2041_2070_ssp126, xy = TRUE, na.rm = TRUE)
 colnames(df_clim_eur_2041_2070_ssp126) <- c("x", "y", "clim_region")
 
@@ -580,7 +583,7 @@ colnames(df_clim_eur_2041_2070_ssp370) <- c("x", "y", "clim_region")
 df_clim_eur_2041_2070_ssp585 <- as.data.frame(clim_eur_2041_2070_ssp585, xy = TRUE, na.rm = TRUE)
 colnames(df_clim_eur_2041_2070_ssp585) <- c("x", "y", "clim_region")
 
-# Join information on biogeographic region with occurrence probabilities
+# Join information on climate region with occurrence probabilities
 # by x and y coordinate
 I_ricinus_joined_ssp126 <- I_ricinus_occ_prob_clim_landuse_ens_fut_df_long_ssp126 %>%
   inner_join(df_clim_eur_2041_2070_ssp126, by = c("x", "y"))
@@ -600,22 +603,22 @@ C_pipiens_joined_ssp370 <- C_pipiens_occ_prob_clim_landuse_ens_fut_df_long_ssp37
 C_pipiens_joined_ssp585 <- C_pipiens_occ_prob_clim_landuse_ens_fut_df_long_ssp585 %>%
   inner_join(df_clim_eur_2041_2070_ssp585, by = c("x", "y"))
 
-TBE_joined_ssp126 <- TBE_occ_prob_clim_ens_fut_df_long_ssp126 %>%
+TBE_joined_ssp126 <- TBE_occ_prob_clim_landuse_ens_fut_df_long_ssp126 %>%
   inner_join(df_clim_eur_2041_2070_ssp126, by = c("x", "y"))
 
-TBE_joined_ssp370 <- TBE_occ_prob_clim_ens_fut_df_long_ssp370 %>%
+TBE_joined_ssp370 <- TBE_occ_prob_clim_landuse_ens_fut_df_long_ssp370 %>%
   inner_join(df_clim_eur_2041_2070_ssp370, by = c("x", "y"))
 
-TBE_joined_ssp585 <- TBE_occ_prob_clim_ens_fut_df_long_ssp585 %>%
+TBE_joined_ssp585 <- TBE_occ_prob_clim_landuse_ens_fut_df_long_ssp585 %>%
   inner_join(df_clim_eur_2041_2070_ssp585, by = c("x", "y"))
 
-WNV_joined_ssp126 <- WNV_occ_prob_clim_ens_fut_df_long_ssp126 %>%
+WNV_joined_ssp126 <- WNV_occ_prob_clim_landuse_ens_fut_df_long_ssp126 %>%
   inner_join(df_clim_eur_2041_2070_ssp126, by = c("x", "y"))
 
-WNV_joined_ssp370 <- WNV_occ_prob_clim_ens_fut_df_long_ssp370 %>%
+WNV_joined_ssp370 <- WNV_occ_prob_clim_landuse_ens_fut_df_long_ssp370 %>%
   inner_join(df_clim_eur_2041_2070_ssp370, by = c("x", "y"))
 
-WNV_joined_ssp585 <- WNV_occ_prob_clim_ens_fut_df_long_ssp585 %>%
+WNV_joined_ssp585 <- WNV_occ_prob_clim_landuse_ens_fut_df_long_ssp585 %>%
   inner_join(df_clim_eur_2041_2070_ssp585, by = c("x", "y"))
 
 # Create a vector indicating the mathematical operations to extract peak and mean 
@@ -627,7 +630,7 @@ for (o in operations) { # Loop over the peak and mean functions
   
   print(o)
   
-  # Calculate the mean habitat suitability per biogeographic region
+  # Calculate the mean habitat suitability across Europe per climatic region
   # for each month per year
   I_ricinus_summary_ssp126 <- I_ricinus_joined_ssp126 %>%
     group_by(clim_region, year, month) %>%
@@ -735,12 +738,13 @@ for (o in operations) { # Loop over the peak and mean functions
   combined_df <- combined_df %>%
     mutate(
       decade = case_when(
+        year >= 2020 & year < 2030 ~ "2020s",
         year >= 2030 & year < 2040 ~ "2030s",
         year >= 2040 & year < 2050 ~ "2040s",
-        year >= 2050 & year < 2060 ~ "2050s",
-        year >= 2060 & year < 2070 ~ "2060s"))
+        year >= 2050 & year < 2060 ~ "2050s"))
   
-  # Keep summarising the data over the decade, month, and vector/virus per biogeographic region
+  # Keep summarising the data over the decade, month, and vector/virus per
+  # climate region
   aggregated_df_fut <- combined_df %>%
     group_by(clim_region, decade, month, species, scenario) %>%
     summarise(occ_probability = if (o == "Peak") quantile(mean_probability, 0.95, na.rm = TRUE)
@@ -766,7 +770,7 @@ for (o in operations) { # Loop over the peak and mean functions
                            NA_character_, month)) %>%
     filter(!is.na(month))
   
-  # Convert month values and latitudinal bands to factors for proper ordering in the plot
+  # Convert month values to factors for proper ordering in the plot
   aggregated_df_fut <- aggregated_df_fut %>%
     mutate(month = factor(month, levels = month.abb))
   
@@ -791,34 +795,31 @@ for (o in operations) { # Loop over the peak and mean functions
 # a) Prepare data for plotting -------------------------------------------------
 
 # Load needed data
-# The masks containing the countries with a mandatory reporting system of 
-# disease surveillance data to the ECDC; we load different masks depending on
-# the virus as Austria did not report of NUTS3 level for TBE
-eu_eea_mask_WNV <- terra::rast("input_data/spatial_data/eu_eea_mask_WNV.tif") 
-eu_eea_mask_TBE <- terra::rast("input_data/spatial_data/eu_eea_mask_TBE.tif")
+# The masks containing the countries that belong to the EU/EEA
+eu_eea_mask <- terra::rast("input_data/spatial_data/eu_eea_mask.tif")
 
-# Align the extent of Europe mask the extent of WNV/TBE mask 
-# (containing the countries with mandatory reporting; it does not matter if we take
-# TBE or WNV mask as both have the same extent)
+
+# Align the extent of the Europe climate rasters with the EU/EEA mask, and 
+# only keep climate cells of EU/EEA countries
 # 1961 - 1990
-clim_eur_1961_1990 <- crop(clim_eur_1961_1990, ext(eu_eea_mask_WNV))
-clim_eur_1961_1990 <- mask(clim_eur_1961_1990, eu_eea_mask_WNV)
+clim_eur_1961_1990 <- crop(clim_eur_1961_1990, ext(eu_eea_mask))
+clim_eur_1961_1990 <- mask(clim_eur_1961_1990, eu_eea_mask)
 
 # 1991 - 2020
-clim_eur_1991_2020 <- crop(clim_eur_1991_2020, ext(eu_eea_mask_WNV))
-clim_eur_1991_2020 <- mask(clim_eur_1991_2020, eu_eea_mask_WNV)
+clim_eur_1991_2020 <- crop(clim_eur_1991_2020, ext(eu_eea_mask))
+clim_eur_1991_2020 <- mask(clim_eur_1991_2020, eu_eea_mask)
 
 # 2041 - 2070 (environmental scenario ssp126)
-clim_eur_2041_2070_ssp126 <- crop(clim_eur_2041_2070_ssp126, ext(eu_eea_mask_WNV))
-clim_eur_2041_2070_ssp126 <- mask(clim_eur_2041_2070_ssp126, eu_eea_mask_WNV)
+clim_eur_2041_2070_ssp126 <- crop(clim_eur_2041_2070_ssp126, ext(eu_eea_mask))
+clim_eur_2041_2070_ssp126 <- mask(clim_eur_2041_2070_ssp126, eu_eea_mask)
 
 # 2041 - 2070 (environmental scenario ssp370)
-clim_eur_2041_2070_ssp370 <- crop(clim_eur_2041_2070_ssp370, ext(eu_eea_mask_WNV))
-clim_eur_2041_2070_ssp370 <- mask(clim_eur_2041_2070_ssp370, eu_eea_mask_WNV)
+clim_eur_2041_2070_ssp370 <- crop(clim_eur_2041_2070_ssp370, ext(eu_eea_mask))
+clim_eur_2041_2070_ssp370 <- mask(clim_eur_2041_2070_ssp370, eu_eea_mask)
 
 # 2041 - 2070 (environmental scenario ssp585)
-clim_eur_2041_2070_ssp585 <- crop(clim_eur_2041_2070_ssp585, ext(eu_eea_mask_WNV))
-clim_eur_2041_2070_ssp585 <- mask(clim_eur_2041_2070_ssp585, eu_eea_mask_WNV)
+clim_eur_2041_2070_ssp585 <- crop(clim_eur_2041_2070_ssp585, ext(eu_eea_mask))
+clim_eur_2041_2070_ssp585 <- mask(clim_eur_2041_2070_ssp585, eu_eea_mask)
 
 
 # Create a data frame from rasters
@@ -878,13 +879,14 @@ df_all_clim_ssp585 <- bind_rows(df_clim_eur_1961_1990_masked,
 
 
 # Convert Europe mask spatraster into a data frame
-europe_mask_50km_df <- as.data.frame(europe_mask_50km, xy = TRUE)
+europe_mask_df <- as.data.frame(europe_mask, xy = TRUE)
 
 
 # b) Check frequency of climate regions -----------------------------------------
 
-# Extract the frequency of cell per climate region for each time frame
-# to set cells to NA with very small climate cells (not considered in analysis)
+# Extract the frequency of cells per climate region for each time frame
+# to set cells to NA that belong to a climate region consisting of only a few
+# cells (not considered in analysis)
 # 1961 - 1990
 freq(clim_eur_1961_1990)
 
@@ -901,7 +903,7 @@ freq(clim_eur_2041_2070_ssp370)
 freq(clim_eur_2041_2070_ssp585)
 
 # Remove rows/cells of climate regions belonging to regions with low amount of
-# cells
+# cells (< 15 cells)
 df_all_clim_ssp126[df_all_clim_ssp126$clim_region %in% c("Temperate; Subpolar oceanic", "Continental; Mediterranean"), ] <- NA
 df_all_clim_ssp370[df_all_clim_ssp370$clim_region %in% c("Temperate; Subpolar oceanic", "Continental; Mediterranean"), ] <- NA
 df_all_clim_ssp585[df_all_clim_ssp585$clim_region %in% c("Temperate; Subpolar oceanic", "Continental; Mediterranean"), ] <- NA
@@ -922,15 +924,14 @@ df_all_clim_ssp585 <- na.omit(df_all_clim_ssp585)
 
 # Visualise maps with main climate regions (ssp126)
 ggplot(df_all_clim_ssp126, aes(x = x, y = y, fill = clim_region)) +
-  geom_raster(data = europe_mask_50km_df, aes(x = x, y = y), fill = "gray22") +
+  geom_raster(data = europe_mask_df, aes(x = x, y = y), fill = "gray22") +
   geom_raster() +
-  facet_grid2(rows = vars(purpose), cols = vars(time_frame),
-    strip = strip_themed(
-      background_x = element_rect(fill = "grey75", color = NA),
-      background_y = element_rect(fill = "grey75", color = NA))) +
+  facet_grid2(purpose ~ time_frame,
+              strip = strip_themed(background_y = elem_list_rect(fill = "grey75", color = NA),
+                                   background_x = elem_list_rect(fill = "grey75", color = NA))) +
   scale_fill_manual(
     values = c(
-      "Dry" = "burlywood2",
+      "Arid" = "burlywood2",
       "Temperate; Mediterranean" = "darkorchid4",
       "Temperate; Humid subtropical" = "mediumorchid",
       "Temperate; Oceanic" = "thistle3",
@@ -955,7 +956,7 @@ ggsave("output_data/plots/climateregions_trends/mainclimate_regions_Europe_ssp12
 
 # Visualise maps with main climate regions (ssp370)
 ggplot(df_all_clim_ssp370, aes(x = x, y = y, fill = clim_region)) +
-  geom_raster(data = europe_mask_50km_df, aes(x = x, y = y), fill = "gray22") +
+  geom_raster(data = europe_mask_df, aes(x = x, y = y), fill = "gray22") +
   geom_raster() +
   facet_grid2(rows = vars(purpose), cols = vars(time_frame),
               strip = strip_themed(
@@ -963,7 +964,7 @@ ggplot(df_all_clim_ssp370, aes(x = x, y = y, fill = clim_region)) +
                 background_y = element_rect(fill = "grey75", color = NA))) +
   scale_fill_manual(
     values = c(
-      "Dry" = "burlywood2",
+      "Arid" = "burlywood2",
       "Temperate; Mediterranean" = "darkorchid4",
       "Temperate; Humid subtropical" = "mediumorchid",
       "Temperate; Oceanic" = "thistle3",
@@ -988,7 +989,7 @@ ggsave("output_data/plots/climateregions_trends/mainclimate_regions_Europe_ssp37
 
 # Visualise maps with main climate regions (ssp585)
 ggplot(df_all_clim_ssp585, aes(x = x, y = y, fill = clim_region)) +
-  geom_raster(data = europe_mask_50km_df, aes(x = x, y = y), fill = "gray22") +
+  geom_raster(data = europe_mask_df, aes(x = x, y = y), fill = "gray22") +
   geom_raster() +
   facet_grid2(rows = vars(purpose), cols = vars(time_frame),
               strip = strip_themed(
@@ -996,7 +997,7 @@ ggplot(df_all_clim_ssp585, aes(x = x, y = y, fill = clim_region)) +
                 background_y = element_rect(fill = "grey75", color = NA))) +
   scale_fill_manual(
     values = c(
-      "Dry" = "burlywood2",
+      "Arid" = "burlywood2",
       "Temperate; Mediterranean" = "darkorchid4",
       "Temperate; Humid subtropical" = "mediumorchid",
       "Temperate; Oceanic" = "thistle3",
@@ -1025,12 +1026,10 @@ ggsave("output_data/plots/climateregions_trends/mainclimate_regions_Europe_ssp58
 
 
 
-
-
 #-------------------------------------------------------------------------------
 
-# 4. Visualise trends for main climatic regions --------------------------------
-# for main vectors as well as viruses
+# 4. Visualise decadal trends across main climatic regions ---------------------
+# for main vectors as well as viruses (1970s, 2010s, 2050s)
 
 
 # a) Prepare data frames for plotting ------------------------------------------
@@ -1043,18 +1042,19 @@ for (o in operations) { # Loop over the peak and mean functions
   
   print(o)
   
-  # Load the needed data of past and future decadal trends of main climate regions
+  # Load the needed data of past and future decadal trends across main climate 
+  # regions of Europe
   load(paste0("output_data/results/climateregions_trends/climateregions_trends_past_vector_virus_",o,".RData"))
   load(paste0("output_data/results/climateregions_trends/climateregions_trends_fut_vector_virus_",o,".RData"))
   
-  # Subset data for single environmental scenarios
+  # Subset data for single socio-economic scenarios
   aggregated_df_futssp126 <- aggregated_df_fut[aggregated_df_fut$scenario == "Projected future ssp126", ]
   aggregated_df_futssp370 <- aggregated_df_fut[aggregated_df_fut$scenario == "Projected future ssp370", ]
   aggregated_df_futssp585 <- aggregated_df_fut[aggregated_df_fut$scenario == "Projected future ssp585", ]
   
   
   # Bind the two data frames containing the information of past and future decadal
-  # trends of main clmate regions for Ixodes ricinus, TBE, Culex pipiens, and WNV
+  # trends of main climate regions for Ixodes ricinus, TBE, Culex pipiens, and WNV
   decadal_trends_past_futssp126 <- rbind(aggregated_df_past, aggregated_df_futssp126)
   decadal_trends_past_futssp370 <- rbind(aggregated_df_past, aggregated_df_futssp370)
   decadal_trends_past_futssp585 <- rbind(aggregated_df_past, aggregated_df_futssp585)
@@ -1082,7 +1082,7 @@ for (o in operations) { # Loop over the peak and mean functions
   decadal_trends_past_futssp585$species <- factor(decadal_trends_past_futssp585$species, 
                                                   levels = c("Ixodes ricinus", "TBE", "Culex pipiens", "WNV"))
   
-  # Make sure that the future decade of the 2050s includes the corresponding environmental scenario name
+  # Make sure that the future decade of the 2050s includes the corresponding socio-economic scenario name
   decadal_trends_past_futssp126$decade <- as.character(decadal_trends_past_futssp126$decade)
   decadal_trends_past_futssp126$decade[decadal_trends_past_futssp126$decade == "2050s"] <- "2050s; ssp126"
   
@@ -1107,20 +1107,16 @@ for (o in operations) { # Loop over the peak and mean functions
   
 # b) Visualise phenology for main climate regions (past + future ssp126) -------  
   
-  # Create the plot for observed environmental data and environmental scenario ssp126
+  # Create the plot
   ggplot(decadal_trends_past_futssp126, aes(x = month, y = occ_probability, color = clim_region, linetype = scenario, group = interaction(clim_region, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +  
-    facet_grid2(rows = vars(species), cols = vars(decade), scales = "free_y",
-                strip = strip_themed(background_y = list(
-                  "Ixodes ricinus" = element_rect(fill = "steelblue3"),
-                  "TBE" = element_rect(fill = "steelblue3"),            
-                  "Culex pipiens" = element_rect(fill = "lightsteelblue1"),   
-                  "WNV" = element_rect(fill = "lightsteelblue1")  
-                ))) +
-    labs(x = "Month in a year", y = paste(o, "occurrence probability"), color = "Latitudinal band", linetype = "Prediction basis") +
+    facet_grid2(species ~ decade, scales = "free_y",
+                strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
+                                     text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
+    labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Latitudinal band", linetype = "Prediction basis") +
     scale_color_manual(
       values = c(
-        "Dry" = "burlywood2",
+        "Arid" = "burlywood2",
         "Temperate; Mediterranean" = "darkorchid4",
         "Temperate; Humid subtropical" = "mediumorchid",
         "Temperate; Oceanic" = "thistle3",
@@ -1157,20 +1153,16 @@ for (o in operations) { # Loop over the peak and mean functions
   
 # c) Visualise phenology for main climate regions (past + future ssp370) -------
   
-  # Create the plot for observed environmental data and environmental scenario ssp370
+  # Create the plot
   ggplot(decadal_trends_past_futssp370, aes(x = month, y = occ_probability, color = clim_region, linetype = scenario, group = interaction(clim_region, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +  
-    facet_grid2(rows = vars(species), cols = vars(decade), scales = "free_y",
-                strip = strip_themed(background_y = list(
-                  "Ixodes ricinus" = element_rect(fill = "steelblue3"),
-                  "TBE" = element_rect(fill = "steelblue3"),            
-                  "Culex pipiens" = element_rect(fill = "lightsteelblue1"),   
-                  "WNV" = element_rect(fill = "lightsteelblue1")  
-                ))) +
-    labs(x = "Month in a year", y = paste(o, "occurrence probability"), color = "Latitudinal band", linetype = "Prediction basis") +
+    facet_grid2(species ~ decade, scales = "free_y",
+                strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
+                                     text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
+    labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Latitudinal band", linetype = "Prediction basis") +
     scale_color_manual(
       values = c(
-        "Dry" = "burlywood2",
+        "Arid" = "burlywood2",
         "Temperate; Mediterranean" = "darkorchid4",
         "Temperate; Humid subtropical" = "mediumorchid",
         "Temperate; Oceanic" = "thistle3",
@@ -1207,20 +1199,16 @@ for (o in operations) { # Loop over the peak and mean functions
   
 # d) Visualise phenology for main climate regions (past + future ssp585) -------
   
-  # Create the plot for observed environmental data and environmental scenario ssp370
+  # Create the plot
   ggplot(decadal_trends_past_futssp585, aes(x = month, y = occ_probability, color = clim_region, linetype = scenario, group = interaction(clim_region, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +  
-    facet_grid2(rows = vars(species), cols = vars(decade), scales = "free_y",
-                strip = strip_themed(background_y = list(
-                  "Ixodes ricinus" = element_rect(fill = "steelblue3"),
-                  "TBE" = element_rect(fill = "steelblue3"),            
-                  "Culex pipiens" = element_rect(fill = "lightsteelblue1"),   
-                  "WNV" = element_rect(fill = "lightsteelblue1")  
-                ))) +
-    labs(x = "Month in a year", y = paste(o, "occurrence probability"), color = "Latitudinal band", linetype = "Prediction basis") +
+    facet_grid2(species ~ decade, scales = "free_y",
+                strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
+                                     text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
+    labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Latitudinal band", linetype = "Prediction basis") +
     scale_color_manual(
       values = c(
-        "Dry" = "burlywood2",
+        "Arid" = "burlywood2",
         "Temperate; Mediterranean" = "darkorchid4",
         "Temperate; Humid subtropical" = "mediumorchid",
         "Temperate; Oceanic" = "thistle3",
@@ -1255,8 +1243,6 @@ for (o in operations) { # Loop over the peak and mean functions
   
   
 } # Close the loop over the peak and mean functions
-
-
 
 
 

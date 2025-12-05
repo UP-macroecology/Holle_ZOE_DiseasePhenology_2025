@@ -1,21 +1,31 @@
 # ZOE project 
-# Disease phenology analysis of Culex pipiens in Europe (primary transmitter of WNV)
+
 
 #-------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------- #
-#                          04b. Model fitting                            #
+#                   04b. Model fitting - Culex pipiens                   #
 # ---------------------------------------------------------------------- #
+
+# What is done within this script:
+
+# For the species Culex pipiens, we identify the most important and weakly 
+# correlated predictor variables to include in model construction. Because the
+# temperature variables (tas, tasmin, tasmax) are highly correlated, they are 
+# excluded from the model selection process and later used to create three
+# different predictor sets on which the final models are built. Models are built
+# using four different algorithms: Generalised Linear Model (GLM), Generalised 
+# Additive Model (GAM), Random Forest (RF), and Boosted Regression Tree (BRT).
 
 
 # Load needed packages
-library(mgcv)
-library(maxnet)
-library(randomForest)
-library(gbm)
-library(dismo)
-library(tidyverse)
-library(corrplot)
+library(mgcv) # mgcv_1.8-42
+library(maxnet) # maxnet_0.1.4
+library(randomForest) # randomForest_4.7-1.1
+library(gbm) # gbm_2.1.8.1
+library(dismo) # dismo_1.3-14
+library(tidyverse) # tidyverse_2.0.0
+library(corrplot) # corrplot_0.92
 
 # Load needed objects
 source("scripts/00_functions.R") # Get the select07_cv function (explained deviance function)
@@ -48,6 +58,7 @@ var_sel <- select07_cv(X = C_pipiens_occ_env[,predictors],
                        threshold = 0.7,
                        weights = weights)
 
+
 # Extract most important and weakly correlated predictors
 my_preds <- var_sel$pred_sel
 
@@ -73,6 +84,10 @@ C_pipiens_occ_env$abs_index[C_pipiens_occ_env$occ!=1] <- sample(1:background_pre
 #-------------------------------------------------------------------------------
 
 # 2. Model fitting -------------------------------------------------------------
+# Fit models based on four different algorithms
+
+
+# (a) Generalised linear models ------------------------------------------------
 
 # Fit GLM (including linear and quadratic terms, AIC-based stepwise variable selection, equal weights)
 # for all three predictor sets
@@ -97,6 +112,7 @@ names(models_glm) <- sapply(my_preds_list, paste, collapse = "+")
 
 
 
+# (b) Generalised additive models ----------------------------------------------
 
 # Fit GAM (cubic smoothing splines, equal weights) for all three predictor sets
 print("GAM")
@@ -120,6 +136,7 @@ names(models_gam) <- sapply(my_preds_list, paste, collapse = "+")
 
 
 
+# (c) Random forests -----------------------------------------------------------
 
 # Fit RF (same number of presences and background data, n models in total depending on the background-presence ratio)
 # for all three predictor sets
@@ -141,6 +158,7 @@ for (m in seq_along(my_preds_list)) { # Start the loop over the three different 
 
 
 
+# (d) Boosted regression trees -------------------------------------------------
 
 # Fit BRT (same number of presences and background data, n models in total depending on the background-presence ratio, 
 # adaptable learning rate to fit model with 1000 and 5000 trees) for all three predictor sets
@@ -177,6 +195,7 @@ for (m in seq_along(my_preds_list)) { # Start the loop over the three different 
 
 
 
-# Save the models
+# (e) # Save the models --------------------------------------------------------
+
 save(models_glm, models_gam, models_rf, models_brt, weights, predictors, my_preds_list, presences, C_pipiens_occ_env, background_presence_ratio,
      file = "output_data/models/C_pipiens_SDMs.RData")

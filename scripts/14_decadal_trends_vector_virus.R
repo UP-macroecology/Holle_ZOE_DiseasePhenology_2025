@@ -3,14 +3,27 @@
 #-------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------- #
-#                         13. Decadal trends                             #
+#                         14. Decadal trends                             #
 # ---------------------------------------------------------------------- #
 
+# What is done within this script:
+
+# We calculate and visualise the decadal trends in the timing of mean and peak
+# vector and virus suitability throughout the year from historical to future 
+# time periods. In doing so, we compare historical phenology trends based on 
+# factual and counterfactual scenarios, which allows us to disentangle the 
+# relative impacts of climate and land-use changes. Additionally, we compare 
+# future phenology trends across three different climate and land-use scenarios 
+# (ssp126, ssp37, ssp585), representing different potential environmental 
+# trajectories.
+
+
 # Load needed packages
-library(terra)
-library(tidyverse)
-library(ggplot2)
-library(ggh4x)
+library(terra) # terra_1.7-55
+library(tidyverse) # tidyverse_2.0.0
+library(ggplot2) # ggplot2_4.0.0
+library(ggh4x) # ggh4x_0.3.1
+
 
 
 
@@ -23,32 +36,32 @@ library(ggh4x)
 
 # a) Load data -----------------------------------------------------------------
 
-# Load needed data - postprocessed monthly predicted ensemble occurrence probability
+# Load needed data - postprocessed monthly predicted ensemble occurrence probabilities
 # of main vectors and the respective viruses, under climate and land use change, as 
 # well as under the counterfactual scenarios for the years 1970 to 2019
 # Ixodes ricinus
-I_ricinus_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_landuse_ens_1970_2019.tif")
-I_ricinus_occ_prob_noclim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/I_ricinus_preds_noclim_landuse_ens_1970_2019.tif")
-I_ricinus_occ_prob_clim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_nolanduse_ens_1970_2019.tif")
-I_ricinus_occ_prob_noclim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/I_ricinus_preds_noclim_nolanduse_ens_1970_2019.tif")
+I_ricinus_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_1970_2019.tif")
+I_ricinus_occ_prob_noclim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_landuse_ens_1970_2019.tif")
+I_ricinus_occ_prob_clim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_nolanduse_ens_1970_2019.tif")
+I_ricinus_occ_prob_noclim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_noclim_nolanduse_ens_1970_2019.tif")
 
 # Culex pipiens
-C_pipiens_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_landuse_ens_1970_2019.tif")
-C_pipiens_occ_prob_noclim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/C_pipiens_preds_noclim_landuse_ens_1970_2019.tif")
-C_pipiens_occ_prob_clim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_nolanduse_ens_1970_2019.tif")
-C_pipiens_occ_prob_noclim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/C_pipiens_preds_noclim_nolanduse_ens_1970_2019.tif")
+C_pipiens_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_landuse_ens_1970_2019.tif")
+C_pipiens_occ_prob_noclim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_noclim_landuse_ens_1970_2019.tif")
+C_pipiens_occ_prob_clim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_nolanduse_ens_1970_2019.tif")
+C_pipiens_occ_prob_noclim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_noclim_nolanduse_ens_1970_2019.tif")
 
 # TBE
-TBE_occ_prob_clim_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE_preds_clim_ens_1970_2019.tif")
-TBE_occ_prob_noclim_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE_preds_noclim_ens_1970_2019.tif")
-TBE_occ_prob_clim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE_preds_clim_nolanduse_ens_1970_2019.tif")
-TBE_occ_prob_noclim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE_preds_noclim_nolanduse_ens_1970_2019.tif")
+TBE_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_landuse_ens_1970_2019.tif")
+TBE_occ_prob_noclim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE/TBE_preds_noclim_landuse_ens_1970_2019.tif")
+TBE_occ_prob_clim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_nolanduse_ens_1970_2019.tif")
+TBE_occ_prob_noclim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/TBE/TBE_preds_noclim_nolanduse_ens_1970_2019.tif")
 
 # WNV
-WNV_occ_prob_clim_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV_preds_clim_ens_1970_2019.tif")
-WNV_occ_prob_noclim_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV_preds_noclim_ens_1970_2019.tif")
-WNV_occ_prob_clim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV_preds_clim_nolanduse_ens_1970_2019.tif")
-WNV_occ_prob_noclim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV_preds_noclim_nolanduse_ens_1970_2019.tif")
+WNV_occ_prob_clim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_landuse_ens_1970_2019.tif")
+WNV_occ_prob_noclim_landuse_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV/WNV_preds_noclim_landuse_ens_1970_2019.tif")
+WNV_occ_prob_clim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_nolanduse_ens_1970_2019.tif")
+WNV_occ_prob_noclim_nolanduse_ens <- terra::rast("output_data/results/postprocessed_predictions/WNV/WNV_preds_noclim_nolanduse_ens_1970_2019.tif")
 
 
 
@@ -76,12 +89,12 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   names(C_pipiens_occ_prob_noclim_landuse_ens) <- dates
   names(C_pipiens_occ_prob_clim_nolanduse_ens) <- dates
   names(C_pipiens_occ_prob_noclim_nolanduse_ens) <- dates
-  names(TBE_occ_prob_clim_ens) <- dates
-  names(TBE_occ_prob_noclim_ens) <- dates
+  names(TBE_occ_prob_clim_landuse_ens) <- dates
+  names(TBE_occ_prob_noclim_landuse_ens) <- dates
   names(TBE_occ_prob_clim_nolanduse_ens) <- dates
   names(TBE_occ_prob_noclim_nolanduse_ens) <- dates
-  names(WNV_occ_prob_clim_ens) <- dates
-  names(WNV_occ_prob_noclim_ens) <- dates
+  names(WNV_occ_prob_clim_landuse_ens) <- dates
+  names(WNV_occ_prob_noclim_landuse_ens) <- dates
   names(WNV_occ_prob_clim_nolanduse_ens) <- dates
   names(WNV_occ_prob_noclim_nolanduse_ens) <- dates
   
@@ -95,8 +108,9 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   } else if (o == "Mean") { fun <- mean_na_rm
   }
   
-  # Calculate mean or 95th percentile (peak) occurrence probability across the study area (Europe) for each month
-  # and create a data frame with the calculated information (under the factual and counterfactual scenarios)
+  # Calculate mean or 95th percentile (peak) occurrence probability across the 
+  # study area (EU/EEA) for each month and create a data frame with the 
+  # calculated information (under the factual and counterfactual scenarios)
   print("Calculating - Ixodes ricinus; Factual prediction")
   I_ricinus_monthly_clim_landuse <- global(I_ricinus_occ_prob_clim_landuse_ens, fun = fun)
   I_ricinus_monthly_clim_landuse <- data.frame(date = dates, occurrence = I_ricinus_monthly_clim_landuse[,1], scenario = "Factual prediction")
@@ -130,12 +144,12 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   C_pipiens_monthly_noclim_nolanduse <- data.frame(date = dates, occurrence = C_pipiens_monthly_noclim_nolanduse[,1], scenario = "Counterfactual climate + land use")
   
   print("Calculating - TBE; Factual prediction")
-  TBE_monthly_clim <- global(TBE_occ_prob_clim_ens, fun = fun)
-  TBE_monthly_clim <- data.frame(date = dates, occurrence = TBE_monthly_clim[,1], scenario = "Factual prediction")
+  TBE_monthly_clim_landuse <- global(TBE_occ_prob_clim_landuse_ens, fun = fun)
+  TBE_monthly_clim_landuse <- data.frame(date = dates, occurrence = TBE_monthly_clim_landuse[,1], scenario = "Factual prediction")
   
   print("Calculating - TBE; Counterfactual climate")
-  TBE_monthly_noclim <- global(TBE_occ_prob_noclim_ens, fun = fun)
-  TBE_monthly_noclim <- data.frame(date = dates, occurrence = TBE_monthly_noclim[,1], scenario = "Counterfactual climate")
+  TBE_monthly_noclim_landuse <- global(TBE_occ_prob_noclim_landuse_ens, fun = fun)
+  TBE_monthly_noclim_landuse <- data.frame(date = dates, occurrence = TBE_monthly_noclim_landuse[,1], scenario = "Counterfactual climate")
   
   print("Calculating - TBE; Counterfactual land use")
   TBE_monthly_clim_nolanduse <- global(TBE_occ_prob_clim_nolanduse_ens, fun = fun)
@@ -146,12 +160,12 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   TBE_monthly_noclim_nolanduse <- data.frame(date = dates, occurrence = TBE_monthly_noclim_nolanduse[,1], scenario = "Counterfactual climate + land use")
   
   print("Calculating - WNV; Factual prediction")
-  WNV_monthly_clim <- global(WNV_occ_prob_clim_ens, fun = fun)
-  WNV_monthly_clim <- data.frame(date = dates, occurrence = WNV_monthly_clim[,1], scenario = "Factual prediction")
+  WNV_monthly_clim_landuse <- global(WNV_occ_prob_clim_landuse_ens, fun = fun)
+  WNV_monthly_clim_landuse <- data.frame(date = dates, occurrence = WNV_monthly_clim_landuse[,1], scenario = "Factual prediction")
   
   print("Calculating - WNV; Counterfactual climate")
-  WNV_monthly_noclim <- global(WNV_occ_prob_noclim_ens, fun = fun)
-  WNV_monthly_noclim <- data.frame(date = dates, occurrence = WNV_monthly_noclim[,1], scenario = "Counterfactual climate")
+  WNV_monthly_noclim_landuse <- global(WNV_occ_prob_noclim_landuse_ens, fun = fun)
+  WNV_monthly_noclim_landuse <- data.frame(date = dates, occurrence = WNV_monthly_noclim_landuse[,1], scenario = "Counterfactual climate")
   
   print("Calculating - WNV; Counterfactual land use")
   WNV_monthly_clim_nolanduse <- global(WNV_occ_prob_clim_nolanduse_ens, fun = fun)
@@ -170,12 +184,12 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   C_pipiens_monthly_noclim_landuse$species <- "Culex pipiens"
   C_pipiens_monthly_clim_nolanduse$species <- "Culex pipiens"
   C_pipiens_monthly_noclim_nolanduse$species <- "Culex pipiens"
-  TBE_monthly_clim$species <- "TBE"
-  TBE_monthly_noclim$species <- "TBE"
+  TBE_monthly_clim_landuse$species <- "TBE"
+  TBE_monthly_noclim_landuse$species <- "TBE"
   TBE_monthly_clim_nolanduse$species <- "TBE"
   TBE_monthly_noclim_nolanduse$species <- "TBE"
-  WNV_monthly_clim$species <- "WNV"
-  WNV_monthly_noclim$species <- "WNV"
+  WNV_monthly_clim_landuse$species <- "WNV"
+  WNV_monthly_noclim_landuse$species <- "WNV"
   WNV_monthly_clim_nolanduse$species <- "WNV"
   WNV_monthly_noclim_nolanduse$species <- "WNV"
   
@@ -184,9 +198,9 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
                            I_ricinus_monthly_clim_nolanduse, I_ricinus_monthly_noclim_nolanduse,
                            C_pipiens_monthly_clim_landuse, C_pipiens_monthly_noclim_landuse,
                            C_pipiens_monthly_clim_nolanduse, C_pipiens_monthly_noclim_nolanduse,
-                           TBE_monthly_clim, TBE_monthly_noclim,
+                           TBE_monthly_clim_landuse, TBE_monthly_noclim_landuse,
                            TBE_monthly_clim_nolanduse, TBE_monthly_noclim_nolanduse,
-                           WNV_monthly_clim, WNV_monthly_noclim,
+                           WNV_monthly_clim_landuse, WNV_monthly_noclim_landuse,
                            WNV_monthly_clim_nolanduse, WNV_monthly_noclim_nolanduse)
   
   # Create columns for month (1:12) and decade (1970s, 1980s, etc.) to group data
@@ -219,7 +233,7 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   aggregated_df_past <- aggregated_df %>%
     mutate(month = factor(month, levels = 1:12, labels = month.abb))
   
-  # Add a column that indicate that the predictions results are based on 
+  # Add a column that indicates that the prediction results are based on 
   # historical data
   aggregated_df_past$time <- "Historical phenology"
   
@@ -234,7 +248,7 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
                                      levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
                                                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
   
-  # Make sure the vector and diseases appear in the correct position
+  # Make sure the vectors and viruses appear in the correct position
   aggregated_df_past$species <- factor(aggregated_df_past$species, 
                                        levels = c("Ixodes ricinus", "Culex pipiens", "TBE", "WNV"))
   
@@ -244,7 +258,7 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
 # d) Save resulting data frame -------------------------------------------------
   
   # Save the data frame containing the monthly mean and peak occurrence probabilities
-  # per decade
+  # per decade for each vector/virus
   save(aggregated_df_past, file = paste0("output_data/results/decadal_trends/decadal_trends_past_vector_virus_",o,".RData"))
   
   
@@ -261,28 +275,29 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
 
 # a) Load data -----------------------------------------------------------------
 
-# Load needed data - postprocessed monthly predicted ensemble occurrence probability of main vectors and
-# the respective viruses, under climate and land use change for the
-# future years 2030 to 2070 based and three studied environmental scenarios (summarising 5 climate models)
+# Load needed data - postprocessed monthly predicted ensemble occurrence probability 
+# of main vectors and the respective viruses, under climate and land use change 
+# for the future years 2020 to 2059 based and three studied environmental scenarios 
+# (summarising 5 climate models)
 # Ixodes ricinus; ssp126, ssp370, and ssp585
-I_ricinus_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_landuse_ens_2030_2070_ssp126.tif"))
-I_ricinus_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_landuse_ens_2030_2070_ssp370.tif"))
-I_ricinus_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/I_ricinus_preds_clim_landuse_ens_2030_2070_ssp585.tif"))
+I_ricinus_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_2020_2059_ssp126.tif"))
+I_ricinus_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_2020_2059_ssp370.tif"))
+I_ricinus_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Ixodes_ricinus/I_ricinus_preds_clim_landuse_ens_2020_2059_ssp585.tif"))
 
 # Culex pipiens; ssp126, ssp370, and ssp585
-C_pipiens_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_landuse_ens_2030_2070_ssp126.tif"))
-C_pipiens_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_landuse_ens_2030_2070_ssp370.tif"))
-C_pipiens_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/C_pipiens_preds_clim_landuse_ens_2030_2070_ssp585.tif"))
+C_pipiens_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_landuse_ens_2020_2059_ssp126.tif"))
+C_pipiens_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_landuse_ens_2020_2059_ssp370.tif"))
+C_pipiens_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/Culex_pipiens/C_pipiens_preds_clim_landuse_ens_2020_2059_ssp585.tif"))
 
 # TBE; ssp126, ssp370, and ssp585
-TBE_occ_prob_clim_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE_preds_clim_ens_2030_2070_ssp126.tif"))
-TBE_occ_prob_clim_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE_preds_clim_ens_2030_2070_ssp370.tif"))
-TBE_occ_prob_clim_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE_preds_clim_ens_2030_2070_ssp585.tif"))
+TBE_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_landuse_ens_2020_2059_ssp126.tif"))
+TBE_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_landuse_ens_2020_2059_ssp370.tif"))
+TBE_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/TBE/TBE_preds_clim_landuse_ens_2020_2059_ssp585.tif"))
 
 # WNV; ssp126, ssp370, and ssp585
-WNV_occ_prob_clim_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV_preds_clim_ens_2030_2070_ssp126.tif"))
-WNV_occ_prob_clim_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV_preds_clim_ens_2030_2070_ssp370.tif"))
-WNV_occ_prob_clim_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV_preds_clim_ens_2030_2070_ssp585.tif"))
+WNV_occ_prob_clim_landuse_ens_fut_ssp126 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_landuse_ens_2020_2059_ssp126.tif"))
+WNV_occ_prob_clim_landuse_ens_fut_ssp370 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_landuse_ens_2020_2059_ssp370.tif"))
+WNV_occ_prob_clim_landuse_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/postprocessed_predictions/WNV/WNV_preds_clim_landuse_ens_2020_2059_ssp585.tif"))
 
 
 
@@ -293,7 +308,7 @@ WNV_occ_prob_clim_ens_fut_ssp585 <- terra::rast(paste0("output_data/results/post
 operations <- c("Peak", "Mean")
 
 # Generate time information
-dates <- seq(as.Date("2030-01-01"), as.Date("2070-12-01"), by = "month")
+dates <- seq(as.Date("2020-01-01"), as.Date("2059-12-01"), by = "month")
 
 # Assign dates as layer names
 names(I_ricinus_occ_prob_clim_landuse_ens_fut_ssp126) <- dates
@@ -302,12 +317,12 @@ names(I_ricinus_occ_prob_clim_landuse_ens_fut_ssp585) <- dates
 names(C_pipiens_occ_prob_clim_landuse_ens_fut_ssp126) <- dates
 names(C_pipiens_occ_prob_clim_landuse_ens_fut_ssp370) <- dates
 names(C_pipiens_occ_prob_clim_landuse_ens_fut_ssp585) <- dates
-names(TBE_occ_prob_clim_ens_fut_ssp126) <- dates
-names(TBE_occ_prob_clim_ens_fut_ssp370) <- dates
-names(TBE_occ_prob_clim_ens_fut_ssp585) <- dates
-names(WNV_occ_prob_clim_ens_fut_ssp126) <- dates
-names(WNV_occ_prob_clim_ens_fut_ssp370) <- dates
-names(WNV_occ_prob_clim_ens_fut_ssp585) <- dates
+names(TBE_occ_prob_clim_landuse_ens_fut_ssp126) <- dates
+names(TBE_occ_prob_clim_landuse_ens_fut_ssp370) <- dates
+names(TBE_occ_prob_clim_landuse_ens_fut_ssp585) <- dates
+names(WNV_occ_prob_clim_landuse_ens_fut_ssp126) <- dates
+names(WNV_occ_prob_clim_landuse_ens_fut_ssp370) <- dates
+names(WNV_occ_prob_clim_landuse_ens_fut_ssp585) <- dates
 
 
 
@@ -324,6 +339,9 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   } else if (o == "Mean") { fun <- mean_na_rm
   }
   
+  # Calculate mean or 95th percentile (peak) occurrence probability across the 
+  # study area (EU/EEA) for each month and create a data frame with the 
+  # calculated information (under the three environmental scenarios)
   print("Calculating - Ixodes ricinus; Factual prediction ssp126")
   I_ricinus_monthly_clim_landuse_ssp126 <- global(I_ricinus_occ_prob_clim_landuse_ens_fut_ssp126, fun = fun)
   I_ricinus_monthly_clim_landuse_ssp126 <- data.frame(date = dates, occurrence = I_ricinus_monthly_clim_landuse_ssp126[,1], scenario = "Factual prediction")
@@ -349,28 +367,28 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   C_pipiens_monthly_clim_landuse_ssp585 <- data.frame(date = dates, occurrence = C_pipiens_monthly_clim_landuse_ssp585[,1], scenario = "Factual prediction")
   
   print("Calculating - TBE; Factual prediction ssp126")
-  TBE_monthly_clim_ssp126 <- global(TBE_occ_prob_clim_ens_fut_ssp126, fun = fun)
-  TBE_monthly_clim_ssp126 <- data.frame(date = dates, occurrence = TBE_monthly_clim_ssp126[,1], scenario = "Factual prediction")
+  TBE_monthly_clim_landuse_ssp126 <- global(TBE_occ_prob_clim_landuse_ens_fut_ssp126, fun = fun)
+  TBE_monthly_clim_landuse_ssp126 <- data.frame(date = dates, occurrence = TBE_monthly_clim_landuse_ssp126[,1], scenario = "Factual prediction")
   
   print("Calculating - TBE; Factual prediction ssp370")
-  TBE_monthly_clim_ssp370 <- global(TBE_occ_prob_clim_ens_fut_ssp370, fun = fun)
-  TBE_monthly_clim_ssp370 <- data.frame(date = dates, occurrence = TBE_monthly_clim_ssp370[,1], scenario = "Factual prediction")
+  TBE_monthly_clim_landuse_ssp370 <- global(TBE_occ_prob_clim_landuse_ens_fut_ssp370, fun = fun)
+  TBE_monthly_clim_landuse_ssp370 <- data.frame(date = dates, occurrence = TBE_monthly_clim_landuse_ssp370[,1], scenario = "Factual prediction")
   
   print("Calculating - TBE; Factual prediction ssp585")
-  TBE_monthly_clim_ssp585 <- global(TBE_occ_prob_clim_ens_fut_ssp585, fun = fun)
-  TBE_monthly_clim_ssp585 <- data.frame(date = dates, occurrence = TBE_monthly_clim_ssp585[,1], scenario = "Factual prediction")
+  TBE_monthly_clim_landuse_ssp585 <- global(TBE_occ_prob_clim_landuse_ens_fut_ssp585, fun = fun)
+  TBE_monthly_clim_landuse_ssp585 <- data.frame(date = dates, occurrence = TBE_monthly_clim_landuse_ssp585[,1], scenario = "Factual prediction")
   
   print("Calculating - WNV; Factual prediction ssp126")
-  WNV_monthly_clim_ssp126 <- global(WNV_occ_prob_clim_ens_fut_ssp126, fun = fun)
-  WNV_monthly_clim_ssp126 <- data.frame(date = dates, occurrence = WNV_monthly_clim_ssp126[,1], scenario = "Factual prediction")
+  WNV_monthly_clim_landuse_ssp126 <- global(WNV_occ_prob_clim_landuse_ens_fut_ssp126, fun = fun)
+  WNV_monthly_clim_landuse_ssp126 <- data.frame(date = dates, occurrence = WNV_monthly_clim_landuse_ssp126[,1], scenario = "Factual prediction")
   
   print("Calculating - WNV; Factual prediction ssp370")
-  WNV_monthly_clim_ssp370 <- global(WNV_occ_prob_clim_ens_fut_ssp370, fun = fun)
-  WNV_monthly_clim_ssp370 <- data.frame(date = dates, occurrence = WNV_monthly_clim_ssp370[,1], scenario = "Factual prediction")
+  WNV_monthly_clim_landuse_ssp370 <- global(WNV_occ_prob_clim_landuse_ens_fut_ssp370, fun = fun)
+  WNV_monthly_clim_landuse_ssp370 <- data.frame(date = dates, occurrence = WNV_monthly_clim_landuse_ssp370[,1], scenario = "Factual prediction")
   
   print("Calculating - WNV; Factual prediction ssp585")
-  WNV_monthly_clim_ssp585 <- global(WNV_occ_prob_clim_ens_fut_ssp585, fun = fun)
-  WNV_monthly_clim_ssp585 <- data.frame(date = dates, occurrence = WNV_monthly_clim_ssp585[,1], scenario = "Factual prediction")
+  WNV_monthly_clim_landuse_ssp585 <- global(WNV_occ_prob_clim_landuse_ens_fut_ssp585, fun = fun)
+  WNV_monthly_clim_landuse_ssp585 <- data.frame(date = dates, occurrence = WNV_monthly_clim_landuse_ssp585[,1], scenario = "Factual prediction")
   
   # Add another column to the data frames indicating the species/pathogen
   # as well as a column indicating that we look at future disease phenologies
@@ -386,44 +404,41 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
   C_pipiens_monthly_clim_landuse_ssp370$time <- "Future phenology; ssp370"
   C_pipiens_monthly_clim_landuse_ssp585$species <- "Culex pipiens"
   C_pipiens_monthly_clim_landuse_ssp585$time <- "Future phenology; ssp585"
-  TBE_monthly_clim_ssp126$species <- "TBE"
-  TBE_monthly_clim_ssp126$time <- "Future phenology; ssp126"
-  TBE_monthly_clim_ssp370$species <- "TBE"
-  TBE_monthly_clim_ssp370$time <- "Future phenology; ssp370"
-  TBE_monthly_clim_ssp585$species <- "TBE"
-  TBE_monthly_clim_ssp585$time <- "Future phenology; ssp585"
-  WNV_monthly_clim_ssp126$species <- "WNV"
-  WNV_monthly_clim_ssp126$time <- "Future phenology; ssp126"
-  WNV_monthly_clim_ssp370$species <- "WNV"
-  WNV_monthly_clim_ssp370$time <- "Future phenology; ssp370"
-  WNV_monthly_clim_ssp585$species <- "WNV"
-  WNV_monthly_clim_ssp585$time <- "Future phenology; ssp585"
+  TBE_monthly_clim_landuse_ssp126$species <- "TBE"
+  TBE_monthly_clim_landuse_ssp126$time <- "Future phenology; ssp126"
+  TBE_monthly_clim_landuse_ssp370$species <- "TBE"
+  TBE_monthly_clim_landuse_ssp370$time <- "Future phenology; ssp370"
+  TBE_monthly_clim_landuse_ssp585$species <- "TBE"
+  TBE_monthly_clim_landuse_ssp585$time <- "Future phenology; ssp585"
+  WNV_monthly_clim_landuse_ssp126$species <- "WNV"
+  WNV_monthly_clim_landuse_ssp126$time <- "Future phenology; ssp126"
+  WNV_monthly_clim_landuse_ssp370$species <- "WNV"
+  WNV_monthly_clim_landuse_ssp370$time <- "Future phenology; ssp370"
+  WNV_monthly_clim_landuse_ssp585$species <- "WNV"
+  WNV_monthly_clim_landuse_ssp585$time <- "Future phenology; ssp585"
   
   # Combine the data frames
   combined_df <- bind_rows(I_ricinus_monthly_clim_landuse_ssp126, I_ricinus_monthly_clim_landuse_ssp370, I_ricinus_monthly_clim_landuse_ssp585,
                            C_pipiens_monthly_clim_landuse_ssp126, C_pipiens_monthly_clim_landuse_ssp370, C_pipiens_monthly_clim_landuse_ssp585,
-                           TBE_monthly_clim_ssp126, TBE_monthly_clim_ssp370, TBE_monthly_clim_ssp585, 
-                           WNV_monthly_clim_ssp126, WNV_monthly_clim_ssp370, WNV_monthly_clim_ssp585)
+                           TBE_monthly_clim_landuse_ssp126, TBE_monthly_clim_landuse_ssp370, TBE_monthly_clim_landuse_ssp585, 
+                           WNV_monthly_clim_landuse_ssp126, WNV_monthly_clim_landuse_ssp370, WNV_monthly_clim_landuse_ssp585)
   
   
-  # Create columns for month (1:12) and decade (2030s, 2040s, etc.) to group data
+  # Create columns for month (1:12) and decade (2020s, 2030s, etc.) to group data
   combined_df <- combined_df %>%
     mutate(
       month = month(date),
       decade = case_when(
+        year(date) >= 2020 & year(date) < 2030 ~ "2020s",
         year(date) >= 2030 & year(date) < 2040 ~ "2030s",
         year(date) >= 2040 & year(date) < 2050 ~ "2040s",
-        year(date) >= 2050 & year(date) < 2060 ~ "2050s",
-        year(date) >= 2060 & year(date) < 2070 ~ "2060s",
+        year(date) >= 2050 & year(date) < 2060 ~ "2050s"
       )
     )
   
-  # Remove rows that conatin NA values (exclude 2070s)
-  combined_df <- na.omit(combined_df)
-  
-  
   
   # Aggregate by decade and month to calculate the mean for each time window (decade) and month
+  # per vector/virus and environmental scenario
   aggregated_df_fut <- combined_df %>%
     group_by(decade, month, scenario, species, time) %>%
     summarise(
@@ -444,12 +459,12 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
                            NA_character_, month)) %>%
     filter(!is.na(month))
   
-  # Make sure the months are correctly ordered from January to Decemver
+  # Make sure the months are correctly ordered from January to December
   aggregated_df_fut$month <- factor(aggregated_df_fut$month, 
                                     levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
                                                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
   
-  # Make sure the vector and diseases appear in the correct position
+  # Make sure the vector and viruses appear in the correct position
   aggregated_df_fut$species <- factor(aggregated_df_fut$species, 
                                       levels = c("Ixodes ricinus", "Culex pipiens", "TBE", "WNV"))
   
@@ -458,7 +473,7 @@ for (o in operations) { # Loop over the 95th percentile and mean functions
 # d) Save resulting data frame -------------------------------------------------
   
   # Save the data frame containing the monthly mean and peak occurrence probabilities
-  # per decade
+  # per decade for each vector/virus
   save(aggregated_df_fut, file = paste0("output_data/results/decadal_trends/decadal_trends_fut_vector_virus_",o,".RData"))
   
   
@@ -532,7 +547,7 @@ for (o in operations) { # Loop over the peak and mean functions
                                                 levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
                                                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
   
-  # Make sure the vector and diseases appear in the correct position
+  # Make sure the vectors and viruses appear in the correct position
   decadal_trends_past_futssp126$species <- factor(decadal_trends_past_futssp126$species, 
                                             levels = c("Ixodes ricinus", "TBE", "Culex pipiens", "WNV"))
   
@@ -575,31 +590,25 @@ for (o in operations) { # Loop over the peak and mean functions
   
     
 # b) Visualisation of data for scenario ssp126 ---------------------------------
+
   
   print("Visualise ssp126")
   
-  # Visualise the data for future environmental scenario ssp126
-  # for Ixodes ricinus and TBE
+  # Visualise the data for historical and future time frames, based on scenario 
+  # ssp126 in a combined plot for Ixodes ricinus, TBE, Culex pipiens, and WNV
   ggplot(data = decadal_trends_past_futssp126, 
          aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +
-    facet_grid2(rows = vars(species), cols = vars(time), scales = "free_y",
-      strip = strip_themed(background_y = list(
-          "Ixodes ricinus" = element_rect(fill = "steelblue3"),
-          "TBE" = element_rect(fill = "steelblue3"),
-          "Culex pipiens" = element_rect(fill = "lightsteelblue1"),   
-          "WNV" = element_rect(fill = "lightsteelblue1")       
-        ))) +
-    labs(x = "Month in a year", y = paste(o, "occurrence probability"), color = "Decade", linetype = "Prediction basis") +
+    facet_grid2(species ~ time, scales = "free_y",
+                strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
+                                     text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
+    labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
     scale_color_manual(
       values = c(
         "1970s" = "black",
-        #"1980s" = "midnightblue",
         "1990s" = "royalblue4",
-        #"2000s" = "seagreen",
         "2010s" = "lightblue3",
         "2030s" = "lightcoral",
-        #"2040s" = "#CF4446",
         "2050s" = "#A52C60"
       )
     ) +
@@ -611,7 +620,6 @@ for (o in operations) { # Loop over the peak and mean functions
         "Counterfactual climate + land use" = "dotted"
       )
     ) +
-    scale_y_continuous(labels = scales::label_number(accuracy = 0.01)) +
     theme_bw() +
     theme(
       legend.position = "bottom",
@@ -626,13 +634,13 @@ for (o in operations) { # Loop over the peak and mean functions
       strip.background = element_rect(fill = "grey75", color = NA),
       panel.grid.major = element_line(linewidth = 0.3, color = "gray90"),
       panel.grid.minor = element_blank(), 
-      axis.ticks.length = unit(0.3, "cm"),
       legend.key.height = unit(0.8, "cm"),
       legend.key.width = unit(1.5, "cm")) +
     guides(
       color = guide_legend(title.position = "top", nrow = 3, byrow = TRUE),  
       linetype = guide_legend(title.position = "top", nrow = 3, byrow = TRUE) 
-    )
+    ) +
+    scale_y_continuous(labels = scales::label_number(accuracy = 0.01))
   
   # Save the figure
   ggsave(paste0("output_data/plots/decadal_trends/decadal_trends_Ixodes_TBE_Culex_WNV_ssp126_",o,".png"), width = 9, height = 11)
@@ -645,28 +653,21 @@ for (o in operations) { # Loop over the peak and mean functions
   
   print("Visualise ssp370")
   
-  # Visualize the data for future environmental scenario ssp370
-  # for Ixodes ricinus and TBE
+  # Visualise the data for historical and future time frames, based on scenario 
+  # ssp370 in a combined plot for Ixodes ricinus, TBE, Culex pipiens, and WNV
   ggplot(data = decadal_trends_past_futssp370,
          aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +
-    facet_grid2(rows = vars(species), cols = vars(time), scales = "free_y",
-                strip = strip_themed(background_y = list(
-                  "Ixodes ricinus" = element_rect(fill = "steelblue3"),
-                  "TBE" = element_rect(fill = "steelblue3"),
-                  "Culex pipiens" = element_rect(fill = "lightsteelblue1"),   
-                  "WNV" = element_rect(fill = "lightsteelblue1")  
-                ))) +
-    labs(x = "Month in a year", y = paste(o, "occurrence probability"), color = "Decade", linetype = "Prediction basis") +
+    facet_grid2(species ~ time, scales = "free_y",
+                strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
+                                     text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
+    labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
     scale_color_manual(
       values = c(
         "1970s" = "black",
-        #"1980s" = "midnightblue",
         "1990s" = "royalblue4",
-        #"2000s" = "seagreen",
         "2010s" = "lightblue3",
         "2030s" = "lightcoral",
-        #"2040s" = "#CF4446",
         "2050s" = "#A52C60"
       )
     ) +
@@ -692,7 +693,6 @@ for (o in operations) { # Loop over the peak and mean functions
       strip.background = element_rect(fill = "grey75", color = NA),
       panel.grid.major = element_line(linewidth = 0.3, color = "gray90"),
       panel.grid.minor = element_blank(), 
-      axis.ticks.length = unit(0.3, "cm"),
       legend.key.height = unit(0.8, "cm"),
       legend.key.width = unit(1.5, "cm")) +
     guides(
@@ -712,28 +712,21 @@ for (o in operations) { # Loop over the peak and mean functions
   
   print("Visualise ssp585")
   
-  # Visualize the data for future environmental scenario ssp585
-  # for Ixodes ricinus and TBE
+  # Visualise the data for historical and future time frames, based on scenario 
+  # ssp585 in a combined plot for Ixodes ricinus, TBE, Culex pipiens, and WNV
   ggplot(data = decadal_trends_past_futssp585, 
          aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +
-    facet_grid2(rows = vars(species), cols = vars(time), scales = "free_y",
-                strip = strip_themed(background_y = list(
-                  "Ixodes ricinus" = element_rect(fill = "steelblue3"),
-                  "TBE" = element_rect(fill = "steelblue3"),
-                  "Culex pipiens" = element_rect(fill = "lightsteelblue1"),   
-                  "WNV" = element_rect(fill = "lightsteelblue1") 
-                ))) +
-    labs(x = "Month in a year", y = paste(o, "occurrence probability"), color = "Decade", linetype = "Prediction basis") +
+    facet_grid2(species ~ time, scales = "free_y",
+                strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
+                                     text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
+    labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
     scale_color_manual(
       values = c(
         "1970s" = "black",
-        #"1980s" = "midnightblue",
         "1990s" = "royalblue4",
-        #"2000s" = "seagreen",
         "2010s" = "lightblue3",
         "2030s" = "lightcoral",
-        #"2040s" = "#CF4446",
         "2050s" = "#A52C60"
       )
     ) +
@@ -759,13 +752,13 @@ for (o in operations) { # Loop over the peak and mean functions
       strip.background = element_rect(fill = "grey75", color = NA),
       panel.grid.major = element_line(linewidth = 0.3, color = "gray90"),
       panel.grid.minor = element_blank(), 
-      axis.ticks.length = unit(0.3, "cm"),
       legend.key.height = unit(0.8, "cm"),
       legend.key.width = unit(1.5, "cm")) +
     guides(
       color = guide_legend(title.position = "top", nrow = 3, byrow = TRUE),  
       linetype = guide_legend(title.position = "top", nrow = 3, byrow = TRUE) 
-    )
+    ) +
+    scale_y_continuous(labels = scales::label_number(accuracy = 0.01))
   
   # Save the figure
   ggsave(paste0("output_data/plots/decadal_trends/decadal_trends_Ixodes_TBE_Culex_WNV_ssp585_",o,".png"), width = 9, height = 11)
@@ -777,3 +770,122 @@ for (o in operations) { # Loop over the peak and mean functions
 
 
 
+
+
+#-------------------------------------------------------------------------------
+
+# Plot for poster 
+
+# Visualize the data for future environmental scenario ssp370
+# for Ixodes ricinus and TBE
+ggplot(data = decadal_trends_past_futssp370[decadal_trends_past_futssp370$species %in% c("Ixodes ricinus", "TBE"), ],
+       aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
+  geom_line(linewidth = 1.2, alpha = 0.8) +
+  facet_grid2(species ~ time, scales = "free_y",
+              strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3")),
+                                   text_y = elem_list_text(face = c("bold.italic", NA)))) +
+  labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
+  scale_color_manual(
+    values = c(
+      "1970s" = "black",
+      "1990s" = "royalblue4",
+      "2010s" = "lightblue3",
+      "2030s" = "lightcoral",
+      "2050s" = "#A52C60"
+    )
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "Factual prediction" = "solid",
+      "Counterfactual climate" = "dotdash",
+      "Counterfactual land use" = "dashed",
+      "Counterfactual climate + land use" = "dotted"
+    )
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    text = element_text(size = 14),  
+    axis.title = element_text(size = 14),  
+    axis.text = element_text(size = 12),  
+    legend.title = element_text(size = 12.5, face = "bold"),  
+    legend.text = element_text(size = 12),  
+    plot.title = element_text(size = 16, face = "bold"),
+    strip.text = element_text(size = 16, face = "bold"), 
+    strip.background = element_rect(fill = "grey75", color = NA),
+    panel.grid.major = element_line(linewidth = 0.3, color = "gray90"),
+    panel.grid.minor = element_blank(), 
+    legend.key.height = unit(0.8, "cm"),
+    legend.key.width = unit(1.5, "cm"),
+    panel.background = element_rect(fill = "transparent", colour = NA),
+    plot.background = element_rect(fill = "transparent", colour = NA),
+    legend.background = element_rect(fill = "transparent", colour = NA),
+    legend.box.background = element_rect(fill = "transparent", colour = NA)) +
+  guides(
+    color = guide_legend(title.position = "top", nrow = 3, byrow = TRUE),  
+    linetype = guide_legend(title.position = "top", nrow = 3, byrow = TRUE) 
+  ) +
+  scale_y_continuous(labels = scales::label_number(accuracy = 0.01))
+
+
+# Save the figure
+ggsave(paste0("output_data/plots/decadal_trends_Ixodes_TBE_ssp370_poster",o,".png"), width = 9, height = 7, dpi = 400, bg = "transparent", device = grDevices::png,     # use base R's PNG function
+       type = "cairo")
+
+# Visualize the data for future environmental scenario ssp370
+# for Ixodes ricinus and TBE
+ggplot(data = decadal_trends_past_futssp370[decadal_trends_past_futssp370$species %in% c("Culex pipiens", "WNV"), ],
+       aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
+  geom_line(linewidth = 1.2, alpha = 0.8) +
+  facet_grid2(species ~ time, scales = "free_y",
+              strip = strip_themed(background_y = elem_list_rect(fill = c("lightsteelblue1", "lightsteelblue1")),
+                                   text_y = elem_list_text(face = c("bold.italic", NA)))) +
+  labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
+  scale_color_manual(
+    values = c(
+      "1970s" = "black",
+      "1990s" = "royalblue4",
+      "2010s" = "lightblue3",
+      "2030s" = "lightcoral",
+      "2050s" = "#A52C60"
+    )
+  ) +
+  scale_linetype_manual(
+    values = c(
+      "Factual prediction" = "solid",
+      "Counterfactual climate" = "dotdash",
+      "Counterfactual land use" = "dashed",
+      "Counterfactual climate + land use" = "dotted"
+    )
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    text = element_text(size = 14),  
+    axis.title = element_text(size = 14),  
+    axis.text = element_text(size = 12),  
+    legend.title = element_text(size = 12.5, face = "bold"),  
+    legend.text = element_text(size = 12),  
+    plot.title = element_text(size = 16, face = "bold"),
+    strip.text = element_text(size = 16, face = "bold"), 
+    strip.background = element_rect(fill = "grey75", color = NA),
+    panel.grid.major = element_line(linewidth = 0.3, color = "gray90"),
+    panel.grid.minor = element_blank(), 
+    legend.key.height = unit(0.8, "cm"),
+    legend.key.width = unit(1.5, "cm"),
+    panel.background = element_rect(fill = "transparent", colour = NA),
+    plot.background = element_rect(fill = "transparent", colour = NA),
+    legend.background = element_rect(fill = "transparent", colour = NA),
+    legend.box.background = element_rect(fill = "transparent", colour = NA)) +
+  guides(
+    color = guide_legend(title.position = "top", nrow = 3, byrow = TRUE),  
+    linetype = guide_legend(title.position = "top", nrow = 3, byrow = TRUE) 
+  ) +
+  scale_y_continuous(labels = scales::label_number(accuracy = 0.01))
+
+
+# Save the figure
+ggsave(paste0("output_data/plots/decadal_trends_Culex_WNV_ssp370_poster",o,".png"), width = 9, height = 7, dpi = 400, bg = "transparent", device = grDevices::png,     # use base R's PNG function
+       type = "cairo")

@@ -1,21 +1,31 @@
 # ZOE project 
-# Disease phenology analysis of Ixodes ricinus in Europe (primary transmitter of TBE)
+
 
 #-------------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------- #
-#                          05a. Model validation                         #
+#                 05a. Model validation - Ixodes ricinus                 #
 # ---------------------------------------------------------------------- #
 
+# What is done within this script:
+
+# We evaluate the model performance of all algorithms for Ixodes ricinus using a 
+# 5-fold cross-validation approach, focusing on performance metrics such as AUC 
+# and the Boyce index. To further assess the ensemble model performance, we 
+# calculate the average of the continuous cross-validated predictions. 
+# Additionally, we extract monthly performance measures and generate plots of 
+# response curves for each predictor variable.
+
+
+
 # Load needed packages
-library(mgcv)
-library(maxnet)
-library(randomForest)
-library(gbm)
-library(dismo)
-library(ggplot2)
-library(PresenceAbsence)
-library(tidyverse)
+library(mgcv) # mgcv_1.8-42
+library(randomForest) # randomForest_4.7-1.1
+library(gbm) # gbm_2.1.8.1
+library(dismo) # dismo_1.3-14
+library(ggplot2) # ggplot2_4.0.0
+library(PresenceAbsence) # PresenceAbsence_1.1.11
+library(tidyverse) # tidyverse_2.0.0
 
 # Load needed objects
 source("scripts/00_functions.R") # Get the function for SDM evaluation,
@@ -34,6 +44,8 @@ load("output_data/models/I_ricinus_SDMs.RData")
 kfolds <- 5
 ks <- dismo::kfold(seq_len(nrow(I_ricinus_occ_env)), k = kfolds)
 
+
+# (a) Generalised linear models ------------------------------------------------
 
 # GLM
 print("GLM")
@@ -90,6 +102,9 @@ for (glm_index in 1:length(models_glm)) { # Start of the loop over all three mod
 avg_glm_performances <- sapply(c("AUC", "TSS", "Kappa", "Sens", "Spec", "PCC", "D2", "thresh", "Boyce"), function(col) mean(sapply(glm_performances, function(df) df[[col]])))
 avg_glm_performances <- as.data.frame(t(avg_glm_performances))
 
+
+
+# (b) Generalised additive models ----------------------------------------------
 
 # GAM
 print("GAM")
@@ -148,6 +163,7 @@ avg_gam_performances <- as.data.frame(t(avg_gam_performances))
 
 
 
+# (c) Random forests -----------------------------------------------------------
 
 # RF
 print("RF")
@@ -219,8 +235,7 @@ avg_rf_performances <- as.data.frame(t(avg_rf_performances))
 
 
 
-
-
+# (d) Boosted regression trees -------------------------------------------------
 
 # BRT
 print("BRT")
@@ -342,10 +357,15 @@ save(m_glm_preds_cv_all, glm_performances, m_gam_preds_cv_all, gam_performances,
 
 #-------------------------------------------------------------------------------
 
-# 3. Monthly model performances ------------------------------------------------
+# 3. Monthly ensemble model performance ----------------------------------------
 
 # Create a vector containing the months of a year
 month <- str_pad(1:12, width = 2, pad = "0")
+
+# Create an empty data frame to store the ensemble performance measures
+# for each month
+I_ricinus_monthly_validation <- data.frame(matrix(ncol = 10, nrow = 0))
+colnames(I_ricinus_monthly_validation) <- c("Month", "AUC", "TSS", "Kappa", "Sens", "Spec", "PCC", "D2", "thresh", "Boyce")
 
 
 for (m in month) { # Start of the loop over all months
@@ -378,11 +398,20 @@ for (m in month) { # Start of the loop over all months
   # Add the Boyce index to the performance metrics data frame
   m_ens_perf_cv_month$Boyce <- boyce_index_m_ens_month
   
-  # Save the data frame with performance measures
-  save(m_ens_perf_cv_month,  file = paste0("output_data/validation/I_ricinus_monthly_validation_",m,".RData"))
+  # Add the information of the respective month to performance data frame
+  m_ens_perf_cv_month <- m_ens_perf_cv_month %>%
+    mutate(Month = m) %>%
+    relocate(Month, .before = 1)
+  
+  # Bind monthly performance to results data frame
+  I_ricinus_monthly_validation <- rbind(I_ricinus_monthly_validation, m_ens_perf_cv_month)
   
   
 } # Close the loop over all months
+
+
+# Save the data frame containing monthly performance measures
+save(I_ricinus_monthly_validation,  file = "output_data/validation/I_ricinus_monthly_validation.RData")
 
 
 
@@ -396,7 +425,7 @@ for (m in month) { # Start of the loop over all months
 I_ricinus_response_data <- data.frame(matrix(ncol = 4, nrow = 0))
 colnames(I_ricinus_response_data) <- c("environmental_values", "predicted_values", "species", "predictor")
 
-# Create a vector with all predictors within the models, soley the temperature
+# Create a vector with all predictors within the models, solely the temperature
 # variables, and the remaining variables that are used in all models
 my_preds_all <- unique(unlist(my_preds_list))
 temp_var <- c("tas", "tasmin", "tasmax")
