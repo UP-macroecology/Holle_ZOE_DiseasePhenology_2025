@@ -94,7 +94,7 @@ We post-process the ensemble prediction rasters for the viruses and their primar
 ### 13 - Decadal trends in distribution
 script [13]
 
-We visualise the distribution trends of the vectors and viruses for one target month - May for Ixodes ricinus and TBE, and July for Culex pipiens and WNV - across three different target decades: 1970s, 2010, 2050s. For the future target decade (2050s), we look at predictions the were derived from the three different socio-economic scenarios. Only grid cells with vector or virus suitability values indicating at least one predicted presence within the selected month of a given decade are displayed. 
+We visualise the distribution trends of the vectors and viruses for specific target months - May and October for Ixodes ricinus and TBE, and July for Culex pipiens and WNV - across three different target decades: 1970s, 2010, 2050s. For the future target decade (2050s), we look at predictions the were derived from the three different socio-economic scenarios. Only grid cells with vector or virus suitability values indicating at least one predicted presence within the selected month of a given decade are displayed. 
 
 
 ### 14 - Decadal trends in phenology intensity
@@ -248,7 +248,7 @@ output_data
 * Running under: Windows 11 x64 (build 26100)
 
 * Attached packages:
-[1] CoordinateCleaner_3.0.1 [2] corrplot_0.92 [3] countrycode_1.6.0 [4] dplyr_1.1.3 [5] dismo_1.3-14 [6] gbm_2.1.8.1 [7] ggh4x_0.3.0 [8] giscoR_0.6.0 [9] ggnewscale_0.5.1 [10] ggplot2_4.0.0 [11] lubridate_1.9.3 [12] maps_3.4.1 [13] mgcv_1.8-42 [14] PresenceAbsence_1.1.11 [15] randomForest_4.7-1.1 [16] readr_2.1.4 [17] sf_1.0-16 [18] sfheaders_0.4.3 [19] stringr_1.5.0 [20] tidyr_1.3.0 [21] tibble_3.2.1 [22] tidyterra_0.6.1 [23] tidyverse_2.0.0 [24] viridis_0.6.4
+[1] CoordinateCleaner_3.0.1 [2] corrplot_0.92 [3] countrycode_1.6.0 [4] dplyr_1.1.3 [5] dismo_1.3-14 [6] gbm_2.1.8.1 [7] ggh4x_0.3.0 [8] giscoR_0.6.0 [9] ggnewscale_0.5.1 [10] ggplot2_4.0.0 [11] lubridate_1.9.3 [12] maps_3.4.1 [13] mgcv_1.8-42 [14] PresenceAbsence_1.1.11 [15] randomForest_4.7-1.1 [16] readr_2.1.4 [17] sf_1.0-16 [18] sfheaders_0.4.3 [19] stringr_1.5.0 [20] terra_1.7-55 [21] tidyr_1.3.0 [22] tibble_3.2.1 [23] tidyterra_0.6.1 [24] tidyverse_2.0.0 [25] viridis_0.6.4
 
 
 

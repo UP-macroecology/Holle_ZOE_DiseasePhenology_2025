@@ -9,13 +9,13 @@
 
 # What is done within this script:
 
-# We visualise the distribution trends of the vectors and viruses for one target
-# month - May for Ixodes ricinus and TBE, and July for Culex pipiens and WNV - 
-# across three different target decades: 1970s, 2010, 2050s. For the future 
-# target decade (2050s), we look at predictions the were derived from the three 
-# different socio-economic scenarios. Only grid cells with vector or virus 
-# suitability values indicating at least one predicted presence within the 
-# selected month of a given decade are displayed. 
+# We visualise the distribution trends of the vectors and viruses for specific 
+# target months - May and October for Ixodes ricinus and TBE, and July for Culex 
+# pipiens and WNV - across three different target decades: 1970s, 2010, 2050s. 
+# For the future target decade (2050s), we look at predictions the were derived 
+# from the three different socio-economic scenarios. Only grid cells with vector 
+# or virus suitability values indicating at least one predicted presence within 
+# the selected month of a given decade are displayed. 
 
 
 # Load needed packages:
@@ -103,12 +103,17 @@ keep_month <- function(r, month_code){
   r[[months == month_code]]
 }
 
-# Apply the month filtering (May for Ixodes ricinus and TBE; July for Culex
-# pipiens and WNV)
-I_ricinus_r_past_preds_clim_landuse_1970s <- keep_month(I_ricinus_r_past_preds_clim_landuse_1970s, "05") # May
-I_ricinus_r_past_preds_clim_landuse_2010s <- keep_month(I_ricinus_r_past_preds_clim_landuse_2010s, "05") # May
-TBE_r_past_preds_clim_landuse_1970s <- keep_month(TBE_r_past_preds_clim_landuse_1970s, "05") # May
-TBE_r_past_preds_clim_landuse_2010s <- keep_month(TBE_r_past_preds_clim_landuse_2010s, "05") # May 
+# Apply the month filtering (May and October for Ixodes ricinus and TBE; 
+# July for Culex pipiens and WNV)
+I_ricinus_r_past_preds_clim_landuse_1970s_may <- keep_month(I_ricinus_r_past_preds_clim_landuse_1970s, "05") # May
+I_ricinus_r_past_preds_clim_landuse_2010s_may <- keep_month(I_ricinus_r_past_preds_clim_landuse_2010s, "05") # May
+TBE_r_past_preds_clim_landuse_1970s_may <- keep_month(TBE_r_past_preds_clim_landuse_1970s, "05") # May
+TBE_r_past_preds_clim_landuse_2010s_may <- keep_month(TBE_r_past_preds_clim_landuse_2010s, "05") # May 
+
+I_ricinus_r_past_preds_clim_landuse_1970s_october <- keep_month(I_ricinus_r_past_preds_clim_landuse_1970s, "10") # October
+I_ricinus_r_past_preds_clim_landuse_2010s_october <- keep_month(I_ricinus_r_past_preds_clim_landuse_2010s, "10") # October
+TBE_r_past_preds_clim_landuse_1970s_october <- keep_month(TBE_r_past_preds_clim_landuse_1970s, "10") # October
+TBE_r_past_preds_clim_landuse_2010s_october <- keep_month(TBE_r_past_preds_clim_landuse_2010s, "10") # October
 
 C_pipiens_r_past_preds_clim_landuse_1970s <- keep_month(C_pipiens_r_past_preds_clim_landuse_1970s, "07") # July
 C_pipiens_r_past_preds_clim_landuse_2010s <- keep_month(C_pipiens_r_past_preds_clim_landuse_2010s, "07") # July
@@ -129,14 +134,20 @@ threshold_filter_mean <- function(r, threshold){
 }
 
 # Apply function for the vector and viruses for the two different decades
-I_ricinus_mean_thr_1970s <- threshold_filter_mean(I_ricinus_r_past_preds_clim_landuse_1970s, I_ricinus_thresh)
-I_ricinus_mean_thr_2010s <- threshold_filter_mean(I_ricinus_r_past_preds_clim_landuse_2010s, I_ricinus_thresh)
+I_ricinus_mean_thr_1970s_may <- threshold_filter_mean(I_ricinus_r_past_preds_clim_landuse_1970s_may, I_ricinus_thresh)
+I_ricinus_mean_thr_2010s_may <- threshold_filter_mean(I_ricinus_r_past_preds_clim_landuse_2010s_may, I_ricinus_thresh)
+
+I_ricinus_mean_thr_1970s_october <- threshold_filter_mean(I_ricinus_r_past_preds_clim_landuse_1970s_october, I_ricinus_thresh)
+I_ricinus_mean_thr_2010s_october <- threshold_filter_mean(I_ricinus_r_past_preds_clim_landuse_2010s_october, I_ricinus_thresh)
 
 C_pipiens_mean_thr_1970s <- threshold_filter_mean(C_pipiens_r_past_preds_clim_landuse_1970s, C_pipiens_thresh)
 C_pipiens_mean_thr_2010s <- threshold_filter_mean(C_pipiens_r_past_preds_clim_landuse_2010s, C_pipiens_thresh)
 
-TBE_mean_thr_1970s <- threshold_filter_mean(TBE_r_past_preds_clim_landuse_1970s, TBE_thresh)
-TBE_mean_thr_2010s <- threshold_filter_mean(TBE_r_past_preds_clim_landuse_2010s, TBE_thresh)
+TBE_mean_thr_1970s_may <- threshold_filter_mean(TBE_r_past_preds_clim_landuse_1970s_may, TBE_thresh)
+TBE_mean_thr_2010s_may <- threshold_filter_mean(TBE_r_past_preds_clim_landuse_2010s_may, TBE_thresh)
+
+TBE_mean_thr_1970s_october <- threshold_filter_mean(TBE_r_past_preds_clim_landuse_1970s_october, TBE_thresh)
+TBE_mean_thr_2010s_october <- threshold_filter_mean(TBE_r_past_preds_clim_landuse_2010s_october, TBE_thresh)
 
 WNV_mean_thr_1970s <- threshold_filter_mean(WNV_r_past_preds_clim_landuse_1970s, WNV_thresh)
 WNV_mean_thr_2010s <- threshold_filter_mean(WNV_r_past_preds_clim_landuse_2010s, WNV_thresh)
@@ -144,57 +155,81 @@ WNV_mean_thr_2010s <- threshold_filter_mean(WNV_r_past_preds_clim_landuse_2010s,
 
 
 # Convert rasters to data frames for plotting
-I_ricinus_df_1970s <- as.data.frame(I_ricinus_mean_thr_1970s, xy = TRUE)
-I_ricinus_df_2010s <- as.data.frame(I_ricinus_mean_thr_2010s, xy = TRUE)
+I_ricinus_df_1970s_may <- as.data.frame(I_ricinus_mean_thr_1970s_may, xy = TRUE)
+I_ricinus_df_2010s_may <- as.data.frame(I_ricinus_mean_thr_2010s_may, xy = TRUE)
+
+I_ricinus_df_1970s_october <- as.data.frame(I_ricinus_mean_thr_1970s_october, xy = TRUE)
+I_ricinus_df_2010s_october <- as.data.frame(I_ricinus_mean_thr_2010s_october, xy = TRUE)
 
 C_pipiens_df_1970s <- as.data.frame(C_pipiens_mean_thr_1970s, xy = TRUE)
 C_pipiens_df_2010s <- as.data.frame(C_pipiens_mean_thr_2010s, xy = TRUE)
 
-TBE_df_1970s <- as.data.frame(TBE_mean_thr_1970s, xy = TRUE)
-TBE_df_2010s <- as.data.frame(TBE_mean_thr_2010s, xy = TRUE)
+TBE_df_1970s_may <- as.data.frame(TBE_mean_thr_1970s_may, xy = TRUE)
+TBE_df_2010s_may <- as.data.frame(TBE_mean_thr_2010s_may, xy = TRUE)
+
+TBE_df_1970s_october <- as.data.frame(TBE_mean_thr_1970s_october, xy = TRUE)
+TBE_df_2010s_october <- as.data.frame(TBE_mean_thr_2010s_october, xy = TRUE)
 
 WNV_df_1970s  <- as.data.frame(WNV_mean_thr_1970s,  xy = TRUE)
 WNV_df_2010s  <- as.data.frame(WNV_mean_thr_2010s,  xy = TRUE)
 
 # Add a column indicating the studied decade, the studied vector/virus, the 
 # vector/virus combination (as we plot them in one figure)
-I_ricinus_df_1970s$time <- "1970s"
-I_ricinus_df_1970s$species <- "Ixodes ricinus"
-I_ricinus_df_1970s$combination <- "Ixodes ricinus & TBE"
+I_ricinus_df_1970s_may$time <- "1970s"
+I_ricinus_df_1970s_may$species <- "Ixodes ricinus"
+I_ricinus_df_1970s_may$combination <- "Ixodes ricinus & TBE - May"
 
-I_ricinus_df_2010s$time <- "2010s"
-I_ricinus_df_2010s$species <- "Ixodes ricinus"
-I_ricinus_df_2010s$combination <- "Ixodes ricinus & TBE"
+I_ricinus_df_2010s_may$time <- "2010s"
+I_ricinus_df_2010s_may$species <- "Ixodes ricinus"
+I_ricinus_df_2010s_may$combination <- "Ixodes ricinus & TBE - May"
+
+I_ricinus_df_1970s_october$time <- "1970s"
+I_ricinus_df_1970s_october$species <- "Ixodes ricinus"
+I_ricinus_df_1970s_october$combination <- "Ixodes ricinus & TBE - October"
+
+I_ricinus_df_2010s_october$time <- "2010s"
+I_ricinus_df_2010s_october$species <- "Ixodes ricinus"
+I_ricinus_df_2010s_october$combination <- "Ixodes ricinus & TBE - October"
 
 C_pipiens_df_1970s$time <- "1970s"
 C_pipiens_df_1970s$species <- "Culex pipiens"
-C_pipiens_df_1970s$combination <- "Culex pipiens & WNV"
+C_pipiens_df_1970s$combination <- "Culex pipiens & WNV - July"
 
 C_pipiens_df_2010s$time <- "2010s"
 C_pipiens_df_2010s$species <- "Culex pipiens"
-C_pipiens_df_2010s$combination <- "Culex pipiens & WNV"
+C_pipiens_df_2010s$combination <- "Culex pipiens & WNV - July"
 
-TBE_df_1970s$time <- "1970s"
-TBE_df_1970s$species <- "TBE"
-TBE_df_1970s$combination <- "Ixodes ricinus & TBE"
+TBE_df_1970s_may$time <- "1970s"
+TBE_df_1970s_may$species <- "TBE"
+TBE_df_1970s_may$combination <- "Ixodes ricinus & TBE - May"
 
-TBE_df_2010s$time <- "2010s"
-TBE_df_2010s$species <- "TBE"
-TBE_df_2010s$combination <- "Ixodes ricinus & TBE"
+TBE_df_2010s_may$time <- "2010s"
+TBE_df_2010s_may$species <- "TBE"
+TBE_df_2010s_may$combination <- "Ixodes ricinus & TBE - May"
+
+TBE_df_1970s_october$time <- "1970s"
+TBE_df_1970s_october$species <- "TBE"
+TBE_df_1970s_october$combination <- "Ixodes ricinus & TBE - October"
+
+TBE_df_2010s_october$time <- "2010s"
+TBE_df_2010s_october$species <- "TBE"
+TBE_df_2010s_october$combination <- "Ixodes ricinus & TBE - October"
 
 WNV_df_1970s$time <- "1970s"
 WNV_df_1970s$species <- "WNV"
-WNV_df_1970s$combination <- "Culex pipiens & WNV"
+WNV_df_1970s$combination <- "Culex pipiens & WNV - July"
 
 WNV_df_2010s$time <- "2010s"
 WNV_df_2010s$species <- "WNV"
-WNV_df_2010s$combination <- "Culex pipiens & WNV"
+WNV_df_2010s$combination <- "Culex pipiens & WNV - July"
 
 
 # Combine the prepared data frames into one
-aggregated_df_past <- bind_rows(I_ricinus_df_1970s, I_ricinus_df_2010s,
+aggregated_df_past <- bind_rows(I_ricinus_df_1970s_may, I_ricinus_df_2010s_may,
+                                I_ricinus_df_1970s_october, I_ricinus_df_2010s_october,
                                 C_pipiens_df_1970s, C_pipiens_df_2010s,
-                                TBE_df_1970s, TBE_df_2010s,
+                                TBE_df_1970s_may, TBE_df_2010s_may,
+                                TBE_df_1970s_october, TBE_df_2010s_october,
                                 WNV_df_1970s, WNV_df_2010s)
 
 # Save the data frame
@@ -273,15 +308,23 @@ keep_month <- function(r, month_code){
   r[[months == month_code]]
 }
 
-# Apply the month filtering (May for Ixodes ricinus and TBE; July for Culex
-# pipiens and WNV)
-I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s, "05") # May
-I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s, "05")
-I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s, "05")
+# Apply the month filtering (May and October for Ixodes ricinus and TBE; 
+# July for Culex pipiens and WNV)
+I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s_may <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s, "05") # May
+I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s_may <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s, "05")
+I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s_may <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s, "05")
 
-TBE_r_fut_preds_clim_landuse_ssp126_2050s <- keep_month(TBE_r_fut_preds_clim_landuse_ssp126_2050s, "05") # May
-TBE_r_fut_preds_clim_landuse_ssp370_2050s <- keep_month(TBE_r_fut_preds_clim_landuse_ssp370_2050s, "05")
-TBE_r_fut_preds_clim_landuse_ssp585_2050s <- keep_month(TBE_r_fut_preds_clim_landuse_ssp585_2050s, "05")
+I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s_october <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s, "10") # October
+I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s_october <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s, "10")
+I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s_october <- keep_month(I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s, "10")
+
+TBE_r_fut_preds_clim_landuse_ssp126_2050s_may <- keep_month(TBE_r_fut_preds_clim_landuse_ssp126_2050s, "05") # May
+TBE_r_fut_preds_clim_landuse_ssp370_2050s_may <- keep_month(TBE_r_fut_preds_clim_landuse_ssp370_2050s, "05")
+TBE_r_fut_preds_clim_landuse_ssp585_2050s_may <- keep_month(TBE_r_fut_preds_clim_landuse_ssp585_2050s, "05")
+
+TBE_r_fut_preds_clim_landuse_ssp126_2050s_october <- keep_month(TBE_r_fut_preds_clim_landuse_ssp126_2050s, "10") # October
+TBE_r_fut_preds_clim_landuse_ssp370_2050s_october <- keep_month(TBE_r_fut_preds_clim_landuse_ssp370_2050s, "10")
+TBE_r_fut_preds_clim_landuse_ssp585_2050s_october <- keep_month(TBE_r_fut_preds_clim_landuse_ssp585_2050s, "10")
 
 C_pipiens_r_fut_preds_clim_landuse_ssp126_2050s <- keep_month(C_pipiens_r_fut_preds_clim_landuse_ssp126_2050s, "07") # July
 C_pipiens_r_fut_preds_clim_landuse_ssp370_2050s <- keep_month(C_pipiens_r_fut_preds_clim_landuse_ssp370_2050s, "07")
@@ -307,19 +350,27 @@ threshold_filter_mean <- function(r, threshold){
 
 
 
-# Apply function for the vector and viruses for the three different socio-economic
+# Apply function for the vectors and viruses for the three different socio-economic
 # scenarios
-I_ricinus_mean_thr_2050s_ssp126 <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s, I_ricinus_thresh)
-I_ricinus_mean_thr_2050s_ssp370 <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s, I_ricinus_thresh)
-I_ricinus_mean_thr_2050s_ssp585 <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s, I_ricinus_thresh)
+I_ricinus_mean_thr_2050s_ssp126_may <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s_may, I_ricinus_thresh)
+I_ricinus_mean_thr_2050s_ssp370_may <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s_may, I_ricinus_thresh)
+I_ricinus_mean_thr_2050s_ssp585_may <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s_may, I_ricinus_thresh)
+
+I_ricinus_mean_thr_2050s_ssp126_october <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp126_2050s_october, I_ricinus_thresh)
+I_ricinus_mean_thr_2050s_ssp370_october <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp370_2050s_october, I_ricinus_thresh)
+I_ricinus_mean_thr_2050s_ssp585_october <- threshold_filter_mean(I_ricinus_r_fut_preds_clim_landuse_ssp585_2050s_october, I_ricinus_thresh)
 
 C_pipiens_mean_thr_2050s_ssp126 <- threshold_filter_mean(C_pipiens_r_fut_preds_clim_landuse_ssp126_2050s, C_pipiens_thresh)
 C_pipiens_mean_thr_2050s_ssp370 <- threshold_filter_mean(C_pipiens_r_fut_preds_clim_landuse_ssp370_2050s, C_pipiens_thresh)
 C_pipiens_mean_thr_2050s_ssp585 <- threshold_filter_mean(C_pipiens_r_fut_preds_clim_landuse_ssp585_2050s, C_pipiens_thresh)
 
-TBE_mean_thr_2050s_ssp126 <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp126_2050s, TBE_thresh)
-TBE_mean_thr_2050s_ssp370 <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp370_2050s, TBE_thresh)
-TBE_mean_thr_2050s_ssp585 <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp585_2050s, TBE_thresh)
+TBE_mean_thr_2050s_ssp126_may <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp126_2050s_may, TBE_thresh)
+TBE_mean_thr_2050s_ssp370_may <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp370_2050s_may, TBE_thresh)
+TBE_mean_thr_2050s_ssp585_may <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp585_2050s_may, TBE_thresh)
+
+TBE_mean_thr_2050s_ssp126_october <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp126_2050s_october, TBE_thresh)
+TBE_mean_thr_2050s_ssp370_october <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp370_2050s_october, TBE_thresh)
+TBE_mean_thr_2050s_ssp585_october <- threshold_filter_mean(TBE_r_fut_preds_clim_landuse_ssp585_2050s_october, TBE_thresh)
 
 WNV_mean_thr_2050s_ssp126 <- threshold_filter_mean(WNV_r_fut_preds_clim_landuse_ssp126_2050s, WNV_thresh)
 WNV_mean_thr_2050s_ssp370 <- threshold_filter_mean(WNV_r_fut_preds_clim_landuse_ssp370_2050s, WNV_thresh)
@@ -327,17 +378,25 @@ WNV_mean_thr_2050s_ssp585 <- threshold_filter_mean(WNV_r_fut_preds_clim_landuse_
 
 
 # Convert rasters to data frames for plotting
-I_ricinus_df_2050s_ssp126 <- as.data.frame(I_ricinus_mean_thr_2050s_ssp126, xy = TRUE)
-I_ricinus_df_2050s_ssp370 <- as.data.frame(I_ricinus_mean_thr_2050s_ssp370, xy = TRUE)
-I_ricinus_df_2050s_ssp585 <- as.data.frame(I_ricinus_mean_thr_2050s_ssp585, xy = TRUE)
+I_ricinus_df_2050s_ssp126_may <- as.data.frame(I_ricinus_mean_thr_2050s_ssp126_may, xy = TRUE)
+I_ricinus_df_2050s_ssp370_may <- as.data.frame(I_ricinus_mean_thr_2050s_ssp370_may, xy = TRUE)
+I_ricinus_df_2050s_ssp585_may <- as.data.frame(I_ricinus_mean_thr_2050s_ssp585_may, xy = TRUE)
+
+I_ricinus_df_2050s_ssp126_october <- as.data.frame(I_ricinus_mean_thr_2050s_ssp126_october, xy = TRUE)
+I_ricinus_df_2050s_ssp370_october <- as.data.frame(I_ricinus_mean_thr_2050s_ssp370_october, xy = TRUE)
+I_ricinus_df_2050s_ssp585_october <- as.data.frame(I_ricinus_mean_thr_2050s_ssp585_october, xy = TRUE)
 
 C_pipiens_df_2050s_ssp126 <- as.data.frame(C_pipiens_mean_thr_2050s_ssp126, xy = TRUE)
 C_pipiens_df_2050s_ssp370 <- as.data.frame(C_pipiens_mean_thr_2050s_ssp370, xy = TRUE)
 C_pipiens_df_2050s_ssp585 <- as.data.frame(C_pipiens_mean_thr_2050s_ssp585, xy = TRUE)
                                            
-TBE_df_2050s_ssp126 <- as.data.frame(TBE_mean_thr_2050s_ssp126, xy = TRUE)                                         
-TBE_df_2050s_ssp370 <- as.data.frame(TBE_mean_thr_2050s_ssp370, xy = TRUE)                                           
-TBE_df_2050s_ssp585 <- as.data.frame(TBE_mean_thr_2050s_ssp585, xy = TRUE)  
+TBE_df_2050s_ssp126_may <- as.data.frame(TBE_mean_thr_2050s_ssp126_may, xy = TRUE)                                         
+TBE_df_2050s_ssp370_may <- as.data.frame(TBE_mean_thr_2050s_ssp370_may, xy = TRUE)                                           
+TBE_df_2050s_ssp585_may <- as.data.frame(TBE_mean_thr_2050s_ssp585_may, xy = TRUE)  
+
+TBE_df_2050s_ssp126_october <- as.data.frame(TBE_mean_thr_2050s_ssp126_october, xy = TRUE)                                         
+TBE_df_2050s_ssp370_october <- as.data.frame(TBE_mean_thr_2050s_ssp370_october, xy = TRUE)                                           
+TBE_df_2050s_ssp585_october <- as.data.frame(TBE_mean_thr_2050s_ssp585_october, xy = TRUE)  
 
 WNV_df_2050s_ssp126 <- as.data.frame(WNV_mean_thr_2050s_ssp126, xy = TRUE) 
 WNV_df_2050s_ssp370 <- as.data.frame(WNV_mean_thr_2050s_ssp370, xy = TRUE) 
@@ -347,65 +406,94 @@ WNV_df_2050s_ssp585 <- as.data.frame(WNV_mean_thr_2050s_ssp585, xy = TRUE)
 
 # Add a column indicating the studied decade + socio-economic scneario, the 
 # studied vector/virus, the vector/virus combination (as we plot them in one figure)
-I_ricinus_df_2050s_ssp126$time <- "2050s; ssp126"
-I_ricinus_df_2050s_ssp126$species <- "Ixodes ricinus"
-I_ricinus_df_2050s_ssp126$combination <- "Ixodes ricinus & TBE"
+I_ricinus_df_2050s_ssp126_may$time <- "2050s; ssp126"
+I_ricinus_df_2050s_ssp126_may$species <- "Ixodes ricinus"
+I_ricinus_df_2050s_ssp126_may$combination <- "Ixodes ricinus & TBE - May"
 
-I_ricinus_df_2050s_ssp370$time <- "2050s; ssp370"
-I_ricinus_df_2050s_ssp370$species <- "Ixodes ricinus"
-I_ricinus_df_2050s_ssp370$combination <- "Ixodes ricinus & TBE"
+I_ricinus_df_2050s_ssp370_may$time <- "2050s; ssp370"
+I_ricinus_df_2050s_ssp370_may$species <- "Ixodes ricinus"
+I_ricinus_df_2050s_ssp370_may$combination <- "Ixodes ricinus & TBE - May"
 
-I_ricinus_df_2050s_ssp585$time <- "2050s; ssp585"
-I_ricinus_df_2050s_ssp585$species <- "Ixodes ricinus"
-I_ricinus_df_2050s_ssp585$combination <- "Ixodes ricinus & TBE"
+I_ricinus_df_2050s_ssp585_may$time <- "2050s; ssp585"
+I_ricinus_df_2050s_ssp585_may$species <- "Ixodes ricinus"
+I_ricinus_df_2050s_ssp585_may$combination <- "Ixodes ricinus & TBE - May"
 
+I_ricinus_df_2050s_ssp126_october$time <- "2050s; ssp126"
+I_ricinus_df_2050s_ssp126_october$species <- "Ixodes ricinus"
+I_ricinus_df_2050s_ssp126_october$combination <- "Ixodes ricinus & TBE - October"
+
+I_ricinus_df_2050s_ssp370_october$time <- "2050s; ssp370"
+I_ricinus_df_2050s_ssp370_october$species <- "Ixodes ricinus"
+I_ricinus_df_2050s_ssp370_october$combination <- "Ixodes ricinus & TBE - October"
+
+I_ricinus_df_2050s_ssp585_october$time <- "2050s; ssp585"
+I_ricinus_df_2050s_ssp585_october$species <- "Ixodes ricinus"
+I_ricinus_df_2050s_ssp585_october$combination <- "Ixodes ricinus & TBE - October"
 
 C_pipiens_df_2050s_ssp126$time <- "2050s; ssp126"
 C_pipiens_df_2050s_ssp126$species <- "Culex pipiens"
-C_pipiens_df_2050s_ssp126$combination <- "Culex pipiens & WNV"
+C_pipiens_df_2050s_ssp126$combination <- "Culex pipiens & WNV - July"
 
 C_pipiens_df_2050s_ssp370$time <- "2050s; ssp370"
 C_pipiens_df_2050s_ssp370$species <- "Culex pipiens"
-C_pipiens_df_2050s_ssp370$combination <- "Culex pipiens & WNV"
+C_pipiens_df_2050s_ssp370$combination <- "Culex pipiens & WNV - July"
 
 C_pipiens_df_2050s_ssp585$time <- "2050s; ssp585"
 C_pipiens_df_2050s_ssp585$species <- "Culex pipiens"
-C_pipiens_df_2050s_ssp585$combination <- "Culex pipiens & WNV"
+C_pipiens_df_2050s_ssp585$combination <- "Culex pipiens & WNV - July"
 
-TBE_df_2050s_ssp126$time <- "2050s; ssp126"
-TBE_df_2050s_ssp126$species <- "TBE"
-TBE_df_2050s_ssp126$combination <- "Ixodes ricinus & TBE"
+TBE_df_2050s_ssp126_may$time <- "2050s; ssp126"
+TBE_df_2050s_ssp126_may$species <- "TBE"
+TBE_df_2050s_ssp126_may$combination <- "Ixodes ricinus & TBE - May"
 
-TBE_df_2050s_ssp370$time <- "2050s; ssp370"
-TBE_df_2050s_ssp370$species <- "TBE"
-TBE_df_2050s_ssp370$combination <- "Ixodes ricinus & TBE"
+TBE_df_2050s_ssp370_may$time <- "2050s; ssp370"
+TBE_df_2050s_ssp370_may$species <- "TBE"
+TBE_df_2050s_ssp370_may$combination <- "Ixodes ricinus & TBE - May"
 
-TBE_df_2050s_ssp585$time <- "2050s; ssp585"
-TBE_df_2050s_ssp585$species <- "TBE"
-TBE_df_2050s_ssp585$combination <- "Ixodes ricinus & TBE"
+TBE_df_2050s_ssp585_may$time <- "2050s; ssp585"
+TBE_df_2050s_ssp585_may$species <- "TBE"
+TBE_df_2050s_ssp585_may$combination <- "Ixodes ricinus & TBE - May"
+
+TBE_df_2050s_ssp126_october$time <- "2050s; ssp126"
+TBE_df_2050s_ssp126_october$species <- "TBE"
+TBE_df_2050s_ssp126_october$combination <- "Ixodes ricinus & TBE - October"
+
+TBE_df_2050s_ssp370_october$time <- "2050s; ssp370"
+TBE_df_2050s_ssp370_october$species <- "TBE"
+TBE_df_2050s_ssp370_october$combination <- "Ixodes ricinus & TBE - October"
+
+TBE_df_2050s_ssp585_october$time <- "2050s; ssp585"
+TBE_df_2050s_ssp585_october$species <- "TBE"
+TBE_df_2050s_ssp585_october$combination <- "Ixodes ricinus & TBE - October"
 
 WNV_df_2050s_ssp126$time <- "2050s; ssp126"
 WNV_df_2050s_ssp126$species <- "WNV"
-WNV_df_2050s_ssp126$combination <- "Culex pipiens & WNV"
+WNV_df_2050s_ssp126$combination <- "Culex pipiens & WNV - July"
 
 WNV_df_2050s_ssp370$time <- "2050s; ssp370"
 WNV_df_2050s_ssp370$species <- "WNV"
-WNV_df_2050s_ssp370$combination <- "Culex pipiens & WNV"
+WNV_df_2050s_ssp370$combination <- "Culex pipiens & WNV - July"
 
 WNV_df_2050s_ssp585$time <- "2050s; ssp585"
 WNV_df_2050s_ssp585$species <- "WNV"
-WNV_df_2050s_ssp585$combination <- "Culex pipiens & WNV"
+WNV_df_2050s_ssp585$combination <- "Culex pipiens & WNV - July"
 
 
 # Combine the prepared data frames into one for each socio-economic scenario
-aggregated_df_fut_ssp126 <- bind_rows(I_ricinus_df_2050s_ssp126, C_pipiens_df_2050s_ssp126,
-                                      TBE_df_2050s_ssp126, WNV_df_2050s_ssp126)
+aggregated_df_fut_ssp126 <- bind_rows(I_ricinus_df_2050s_ssp126_may, I_ricinus_df_2050s_ssp126_october,
+                                      C_pipiens_df_2050s_ssp126,
+                                      TBE_df_2050s_ssp126_may, TBE_df_2050s_ssp126_october,
+                                      WNV_df_2050s_ssp126)
 
-aggregated_df_fut_ssp370 <- bind_rows(I_ricinus_df_2050s_ssp370, C_pipiens_df_2050s_ssp370,
-                                      TBE_df_2050s_ssp370, WNV_df_2050s_ssp370)
+aggregated_df_fut_ssp370 <- bind_rows(I_ricinus_df_2050s_ssp370_may, I_ricinus_df_2050s_ssp370_october, 
+                                      C_pipiens_df_2050s_ssp370,
+                                      TBE_df_2050s_ssp370_may, TBE_df_2050s_ssp370_october,
+                                      WNV_df_2050s_ssp370)
 
-aggregated_df_fut_ssp585 <- bind_rows(I_ricinus_df_2050s_ssp585, C_pipiens_df_2050s_ssp585,
-                                      TBE_df_2050s_ssp585, WNV_df_2050s_ssp585)
+aggregated_df_fut_ssp585 <- bind_rows(I_ricinus_df_2050s_ssp585_may, I_ricinus_df_2050s_ssp585_october,
+                                      C_pipiens_df_2050s_ssp585,
+                                      TBE_df_2050s_ssp585_may, TBE_df_2050s_ssp585_october,
+                                      WNV_df_2050s_ssp585)
 
 
 
@@ -456,25 +544,66 @@ distribution_trends_virus_ssp370 <- bind_rows(distribution_trends_past_virus, di
 distribution_trends_vector_ssp585 <- bind_rows(distribution_trends_past_vector, distribution_trends_fut_vector_ssp585)
 distribution_trends_virus_ssp585 <- bind_rows(distribution_trends_past_virus, distribution_trends_fut_virus_ssp585)
 
+# Separate into data frames containing May for Ixodes ricinus and TBE - July
+# Culex pipiens and WNV
+distribution_trends_vector_ssp126_may_july <- distribution_trends_vector_ssp126[distribution_trends_vector_ssp126$combination %in% c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"), ]
+distribution_trends_virus_ssp126_may_july <- distribution_trends_virus_ssp126[distribution_trends_virus_ssp126$combination %in% c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"), ]
+
+distribution_trends_vector_ssp370_may_july <- distribution_trends_vector_ssp370[distribution_trends_vector_ssp370$combination %in% c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"), ]
+distribution_trends_virus_ssp370_may_july <- distribution_trends_virus_ssp370[distribution_trends_virus_ssp370$combination %in% c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"), ]
+
+distribution_trends_vector_ssp585_may_july <- distribution_trends_vector_ssp585[distribution_trends_vector_ssp585$combination %in% c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"), ]
+distribution_trends_virus_ssp585_may_july <- distribution_trends_virus_ssp585[distribution_trends_virus_ssp585$combination %in% c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"), ]
+
 # Make sure the vector/virus combination appears in the correct order
-distribution_trends_vector_ssp126$combination <- factor(distribution_trends_vector_ssp126$combination, 
-                                                        levels = c("Ixodes ricinus & TBE", "Culex pipiens & WNV"))
+distribution_trends_vector_ssp126_may_july$combination <- factor(distribution_trends_vector_ssp126_may_july$combination, 
+                                                        levels = c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"))
 
-distribution_trends_virus_ssp126$combination <- factor(distribution_trends_virus_ssp126$combination, 
-                                                       levels = c("Ixodes ricinus & TBE", "Culex pipiens & WNV"))
+distribution_trends_virus_ssp126_may_july$combination <- factor(distribution_trends_virus_ssp126_may_july$combination, 
+                                                       levels = c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"))
 
-distribution_trends_vector_ssp370$combination <- factor(distribution_trends_vector_ssp370$combination, 
-                                                        levels = c("Ixodes ricinus & TBE", "Culex pipiens & WNV"))
+distribution_trends_vector_ssp370_may_july$combination <- factor(distribution_trends_vector_ssp370_may_july$combination, 
+                                                        levels = c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"))
 
-distribution_trends_virus_ssp370$combination <- factor(distribution_trends_virus_ssp370$combination, 
-                                                        levels = c("Ixodes ricinus & TBE", "Culex pipiens & WNV"))
+distribution_trends_virus_ssp370_may_july$combination <- factor(distribution_trends_virus_ssp370_may_july$combination, 
+                                                        levels = c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"))
 
-distribution_trends_vector_ssp585$combination <- factor(distribution_trends_vector_ssp585$combination, 
-                                                        levels = c("Ixodes ricinus & TBE", "Culex pipiens & WNV"))
+distribution_trends_vector_ssp585_may_july$combination <- factor(distribution_trends_vector_ssp585_may_july$combination, 
+                                                        levels = c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"))
 
-distribution_trends_virus_ssp585$combination <- factor(distribution_trends_virus_ssp585$combination, 
-                                                       levels = c("Ixodes ricinus & TBE", "Culex pipiens & WNV"))
+distribution_trends_virus_ssp585_may_july$combination <- factor(distribution_trends_virus_ssp585_may_july$combination, 
+                                                       levels = c("Ixodes ricinus & TBE - May", "Culex pipiens & WNV - July"))
 
+
+# Separate into data frames containing May for Ixodes ricinus and TBE - 
+# October for Ixodes ricinus and TBE
+distribution_trends_vector_ssp126_may_october <- distribution_trends_vector_ssp126[distribution_trends_vector_ssp126$combination %in% c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"), ]
+distribution_trends_virus_ssp126_may_october <- distribution_trends_virus_ssp126[distribution_trends_virus_ssp126$combination %in% c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"), ]
+
+distribution_trends_vector_ssp370_may_october <- distribution_trends_vector_ssp370[distribution_trends_vector_ssp370$combination %in% c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"), ]
+distribution_trends_virus_ssp370_may_october <- distribution_trends_virus_ssp370[distribution_trends_virus_ssp370$combination %in% c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"), ]
+
+distribution_trends_vector_ssp585_may_october <- distribution_trends_vector_ssp585[distribution_trends_vector_ssp585$combination %in% c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"), ]
+distribution_trends_virus_ssp585_may_october <- distribution_trends_virus_ssp585[distribution_trends_virus_ssp585$combination %in% c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"), ]
+
+# Make sure the vector/virus combination appears in the correct order
+distribution_trends_vector_ssp126_may_october$combination <- factor(distribution_trends_vector_ssp126_may_october$combination, 
+                                                                 levels = c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"))
+
+distribution_trends_virus_ssp126_may_october$combination <- factor(distribution_trends_virus_ssp126_may_october$combination, 
+                                                                levels = c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"))
+
+distribution_trends_vector_ssp370_may_october$combination <- factor(distribution_trends_vector_ssp370_may_october$combination, 
+                                                                 levels = c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"))
+
+distribution_trends_virus_ssp370_may_october$combination <- factor(distribution_trends_virus_ssp370_may_october$combination, 
+                                                                levels = c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"))
+
+distribution_trends_vector_ssp585_may_october$combination <- factor(distribution_trends_vector_ssp585_may_october$combination, 
+                                                                 levels = c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"))
+
+distribution_trends_virus_ssp585_may_october$combination <- factor(distribution_trends_virus_ssp585_may_october$combination, 
+                                                                levels = c("Ixodes ricinus & TBE - May", "Ixodes ricinus & TBE - October"))
 
 
 # Visualise vector (greyish scale) and virus (colour scale) distribution 
@@ -483,14 +612,16 @@ distribution_trends_virus_ssp585$combination <- factor(distribution_trends_virus
 # for three different decades
 
 # b) Visualise historical and future distribution based on ssp126 --------------
+# May for Ixodes ricinus and TBE + July for Culex pipiens and WNV
+
 ggplot() +
-  geom_raster(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
+  geom_tile(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
   new_scale_fill() +
-  geom_raster(data = distribution_trends_vector_ssp126, aes(x = x, y = y, fill = mean)) +
+  geom_tile(data = distribution_trends_vector_ssp126_may_july, aes(x = x, y = y, fill = mean)) +
   scale_fill_gradient(name = "Vector suitability", low = "grey80", high = "grey10",
                       limits = c(0, 1)) +
   new_scale_fill() +
-  geom_raster(data = distribution_trends_virus_ssp126,
+  geom_tile(data = distribution_trends_virus_ssp126_may_july,
               aes(x = x, y = y, fill = mean)) +
   scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
                        limits = c(0, 1)) +
@@ -517,14 +648,16 @@ ggsave("output_data/plots/distribution_trends/distribution_trends_Ixodes_TBE_Cul
 
 
 # c) Visualise historical and future distribution based on ssp370 --------------
+# May for Ixodes ricinus and TBE + July for Culex pipiens and WNV
+
 ggplot() +
-  geom_raster(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
+  geom_tile(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
   new_scale_fill() +
-  geom_raster(data = distribution_trends_vector_ssp370, aes(x = x, y = y, fill = mean)) +
+  geom_tile(data = distribution_trends_vector_ssp370_may_july, aes(x = x, y = y, fill = mean)) +
   scale_fill_gradient(name = "Vector suitability", low = "grey80", high = "grey10",
                       limits = c(0, 1)) +
   new_scale_fill() +
-  geom_raster(data = distribution_trends_virus_ssp370,
+  geom_tile(data = distribution_trends_virus_ssp370_may_july,
               aes(x = x, y = y, fill = mean)) +
   scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
                        limits = c(0, 1)) +
@@ -551,15 +684,16 @@ ggsave("output_data/plots/distribution_trends/distribution_trends_Ixodes_TBE_Cul
 
 
 # d) Visualise historical and future distribution based on ssp585 --------------
+# May for Ixodes ricinus and TBE + July for Culex pipiens and WNV
 
 ggplot() +
-  geom_raster(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
+  geom_tile(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
   new_scale_fill() +
-  geom_raster(data = distribution_trends_vector_ssp585, aes(x = x, y = y, fill = mean)) +
+  geom_tile(data = distribution_trends_vector_ssp585_may_july, aes(x = x, y = y, fill = mean)) +
   scale_fill_gradient(name = "Vector suitability", low = "grey80", high = "grey10",
                       limits = c(0, 1)) +
   new_scale_fill() +
-  geom_raster(data = distribution_trends_virus_ssp585,
+  geom_tile(data = distribution_trends_virus_ssp585_may_july,
               aes(x = x, y = y, fill = mean)) +
   scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
                        limits = c(0, 1)) +
@@ -584,3 +718,113 @@ ggplot() +
 ggsave("output_data/plots/distribution_trends/distribution_trends_Ixodes_TBE_Culex_WNV_ssp585.png", width = 7.5, height = 8.5)
 
 
+
+
+# e) Visualise historical and future distribution based on ssp126 --------------
+# May for Ixodes ricinus and TBE + October for Ixodes ricinus and TBE
+
+ggplot() +
+  geom_tile(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
+  new_scale_fill() +
+  geom_tile(data = distribution_trends_vector_ssp126_may_october, aes(x = x, y = y, fill = mean)) +
+  scale_fill_gradient(name = "Vector suitability", low = "grey80", high = "grey10",
+                      limits = c(0, 1)) +
+  new_scale_fill() +
+  geom_tile(data = distribution_trends_virus_ssp126_may_october,
+              aes(x = x, y = y, fill = mean)) +
+  scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
+                       limits = c(0, 1)) +
+  facet_grid2(time ~ combination,
+              strip = strip_themed(background_x = elem_list_rect(fill = c("steelblue3", "steelblue3")),
+                                   text_x = elem_list_text(face = c("bold.italic", "bold.italic")))) +
+  theme_bw() +
+  labs(x = "Longitude", y = "Latitude") +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    text = element_text(size = 14),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 11.5),
+    legend.title = element_text(size = 10.5, face = "bold"),
+    legend.text = element_text(size = 9),
+    strip.background = element_rect(fill = "grey75", colour = NA),
+    strip.text = element_text(size = 15, face = "bold")
+  )
+
+# Save the figure
+ggsave("output_data/plots/distribution_trends/distribution_trends_Ixodes_TBE_ssp126.png", width = 7.5, height = 8.5)
+
+
+
+
+# f) Visualise historical and future distribution based on ssp370 --------------
+# May for Ixodes ricinus and TBE + October for Ixodes ricinus and TBE
+
+ggplot() +
+  geom_tile(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
+  new_scale_fill() +
+  geom_tile(data = distribution_trends_vector_ssp370_may_october, aes(x = x, y = y, fill = mean)) +
+  scale_fill_gradient(name = "Vector suitability", low = "grey80", high = "grey10",
+                      limits = c(0, 1)) +
+  new_scale_fill() +
+  geom_tile(data = distribution_trends_virus_ssp370_may_october,
+              aes(x = x, y = y, fill = mean)) +
+  scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
+                       limits = c(0, 1)) +
+  facet_grid2(time ~ combination,
+              strip = strip_themed(background_x = elem_list_rect(fill = c("steelblue3", "steelblue3")),
+                                   text_x = elem_list_text(face = c("bold.italic", "bold.italic")))) +
+  theme_bw() +
+  labs(x = "Longitude", y = "Latitude") +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    text = element_text(size = 14),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 11.5),
+    legend.title = element_text(size = 10.5, face = "bold"),
+    legend.text = element_text(size = 9),
+    strip.background = element_rect(fill = "grey75", colour = NA),
+    strip.text = element_text(size = 15, face = "bold")
+  )
+
+
+# Save the figure
+ggsave("output_data/plots/distribution_trends/distribution_trends_Ixodes_TBE_ssp370.png", width = 7.5, height = 8.5)
+
+
+
+
+# g) Visualise historical and future distribution based on ssp585 --------------
+# May for Ixodes ricinus and TBE + October for Ixodes ricinus and TBE
+
+ggplot() +
+  geom_tile(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
+  new_scale_fill() +
+  geom_tile(data = distribution_trends_vector_ssp585_may_october, aes(x = x, y = y, fill = mean)) +
+  scale_fill_gradient(name = "Vector suitability", low = "grey80", high = "grey10",
+                      limits = c(0, 1)) +
+  new_scale_fill() +
+  geom_tile(data = distribution_trends_virus_ssp585_may_october,
+              aes(x = x, y = y, fill = mean)) +
+  scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
+                       limits = c(0, 1)) +
+  facet_grid2(time ~ combination,
+              strip = strip_themed(background_x = elem_list_rect(fill = c("steelblue3", "steelblue3")),
+                                   text_x = elem_list_text(face = c("bold.italic", "bold.italic")))) +
+  theme_bw() +
+  labs(x = "Longitude", y = "Latitude") +
+  theme(
+    legend.position = "bottom",
+    legend.box = "horizontal",
+    text = element_text(size = 14),
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 11.5),
+    legend.title = element_text(size = 10.5, face = "bold"),
+    legend.text = element_text(size = 9),
+    strip.background = element_rect(fill = "grey75", colour = NA),
+    strip.text = element_text(size = 15, face = "bold")
+  )
+
+# Save the figure
+ggsave("output_data/plots/distribution_trends/distribution_trends_Ixodes_TBE_ssp585.png", width = 7.5, height = 8.5)
