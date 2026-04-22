@@ -609,6 +609,12 @@ duration_trends_past_futssp585$species <- factor(duration_trends_past_futssp585$
 # Convert Europe mask spatraster into a data frame
 europe_mask_df <- as.data.frame(europe_mask, xy = TRUE)
 
+# Adjust the disease to virus name for TBE (to TBEV)
+species_virus_labeller <- as_labeller(c("Ixodes ricinus" = "Ixodes ricinus",
+                                        "TBE" = "TBEV",
+                                        "Culex pipiens" = "Culex pipiens",
+                                        "WNV" = "WNV"))
+
 
 
 
@@ -634,6 +640,7 @@ max_abs <- max(abs(range_values))
   scale_fill_whitebox_c(palette = "muted", name = "Duration trend\n(months per decade)",
                         limits = c(-max_abs, max_abs), breaks = c(-0.2, 0, 0.2), guide = guide_colorbar(order = 2)) +
   facet_grid2(species ~ time, scales = "free_y",
+              labeller = labeller(species = species_virus_labeller),
               strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                    text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
   theme_bw() +
@@ -678,6 +685,7 @@ ggplot() +
   scale_fill_whitebox_c(palette = "muted", name = "Duration trend\n(months per decade)",
                         limits = c(-max_abs, max_abs), breaks = c(-0.2, 0, 0.2), guide = guide_colorbar(order = 2)) +
   facet_grid2(species ~ time, scales = "free_y",
+              labeller = labeller(species = species_virus_labeller),
               strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                    text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
   theme_bw() +
@@ -722,6 +730,7 @@ ggplot() +
   scale_fill_whitebox_c(palette = "muted", name = "Duration trend\n(months per decade)",
                         limits = c(-max_abs, max_abs), breaks = c(-0.2, 0, 0.2), guide = guide_colorbar(order = 2)) +
   facet_grid2(species ~ time, scales = "free_y",
+              labeller = labeller(species = species_virus_labeller),
               strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                    text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
   theme_bw() +
@@ -924,101 +933,3 @@ predicted_absence_WNV <- sum(decadal_means_2010s_WNV$trend == 0)
 
 percentage_absence_WNV <- (predicted_absence_WNV / total_rows_WNV) * 100
 
-
-
-
-
-#-------------------------------------------------------------------------------
-# 
-# for poster 
-# c) Visualisation of duration trends for ssp370 -------------------------------
-
-duration_trends_past_futssp370_1 <- duration_trends_past_futssp370[duration_trends_past_futssp370$species %in% c("Ixodes ricinus", "TBE"), ]
-
-range_values <- range(duration_trends_past_futssp370_1$trend[duration_trends_past_futssp370_1$legend == "map2"], na.rm = TRUE)
-max_abs <- max(abs(range_values))
-
-# Plot the duration trend per cell based on the factual historical data and the 
-# environmental scenario ssp370
-ggplot() +
-  geom_raster(data = europe_mask_df, aes(x = x, y = y), fill = "gray30") +
-  geom_raster(data = duration_trends_past_futssp370_1 %>% filter(legend == "map1"),
-              aes(x = lon, y = lat, fill = trend)) +
-  scale_fill_viridis_c(option = "F", direction = -1, name = "Duration (months)",
-                       guide = guide_colorbar(order = 1)) +
-  ggnewscale::new_scale_fill() +
-  geom_raster(data = duration_trends_past_futssp370_1 %>% filter(legend == "map2"),
-              aes(x = lon, y = lat, fill = trend)) +
-  scale_fill_whitebox_c(palette = "muted", name = "Duration trend\n(months per decade)",
-                        limits = c(-max_abs, max_abs), breaks = c(-0.2, 0, 0.2), guide = guide_colorbar(order = 2)) +
-  facet_grid2(species ~ time, scales = "free_y",
-              strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3")),
-                                   text_y = elem_list_text(face = c("bold.italic", NA)))) +
-  theme_bw() +
-  labs(x = "Longitude", y = "Latitude") +
-  theme(
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    text = element_text(size = 14),
-    axis.title = element_text(size = 14),
-    axis.text = element_text(size = 12),
-    legend.title = element_text(size = 12.5, face = "bold"),
-    legend.text = element_text(size = 12),
-    plot.title = element_text(size = 16, face = "bold"),
-    strip.text = element_text(size = 16, face = "bold"),
-    strip.background = element_rect(fill = "grey75", color = NA),
-    panel.background = element_rect(fill = "transparent", colour = NA),
-    plot.background = element_rect(fill = "transparent", colour = NA),
-    legend.background = element_rect(fill = "transparent", colour = NA),
-    legend.box.background = element_rect(fill = "transparent", colour = NA)
-  )
-
-# Save the figure
-ggsave(paste0("output_data/plots/duration_trends_2010s_Ixodes_TBE_ssp370_poster.png"), width = 7.5, height = 7, dpi = 400, bg = "transparent", device = grDevices::png,     # use base R's PNG function
-       type = "cairo")
-
-
-
-duration_trends_past_futssp370_2 <- duration_trends_past_futssp370[duration_trends_past_futssp370$species %in% c("Culex pipiens", "WNV"), ]
-
-range_values <- range(duration_trends_past_futssp370_2$trend[duration_trends_past_futssp370_2$legend == "map2"], na.rm = TRUE)
-max_abs <- max(abs(range_values))
-
-# Plot the duration trend per cell based on the factual historical data and the 
-# environmental scenario ssp370
-ggplot() +
-  geom_raster(data = europe_mask_df, aes(x = x, y = y), fill = "gray30") +
-  geom_raster(data = duration_trends_past_futssp370_2 %>% filter(legend == "map1"),
-              aes(x = lon, y = lat, fill = trend)) +
-  scale_fill_viridis_c(option = "F", direction = -1, name = "Duration (months)",
-                       guide = guide_colorbar(order = 1)) +
-  ggnewscale::new_scale_fill() +
-  geom_raster(data = duration_trends_past_futssp370_2 %>% filter(legend == "map2"),
-              aes(x = lon, y = lat, fill = trend)) +
-  scale_fill_whitebox_c(palette = "muted", name = "Duration trend\n(months per decade)",
-                        limits = c(-max_abs, max_abs), breaks = c(-0.2, 0, 0.2), guide = guide_colorbar(order = 2)) +
-  facet_grid2(species ~ time, scales = "free_y",
-              strip = strip_themed(background_y = elem_list_rect(fill = c("lightsteelblue1", "lightsteelblue1")),
-                                   text_y = elem_list_text(face = c("bold.italic", NA)))) +
-  theme_bw() +
-  labs(x = "Longitude", y = "Latitude") +
-  theme(
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    text = element_text(size = 14),
-    axis.title = element_text(size = 14),
-    axis.text = element_text(size = 12),
-    legend.title = element_text(size = 12.5, face = "bold"),
-    legend.text = element_text(size = 12),
-    plot.title = element_text(size = 16, face = "bold"),
-    strip.text = element_text(size = 16, face = "bold"),
-    strip.background = element_rect(fill = "grey75", color = NA),
-    panel.background = element_rect(fill = "transparent", colour = NA),
-    plot.background = element_rect(fill = "transparent", colour = NA),
-    legend.background = element_rect(fill = "transparent", colour = NA),
-    legend.box.background = element_rect(fill = "transparent", colour = NA)
-  )
-
-# Save the figure
-ggsave(paste0("output_data/plots/duration_trends_2010s_Culex_WNV_ssp370_poster.png"), width = 7.5, height = 7, dpi = 400, bg = "transparent", device = grDevices::png,     # use base R's PNG function
-       type = "cairo")

@@ -586,7 +586,12 @@ for (o in operations) { # Loop over the peak and mean functions
   decadal_trends_past_futssp370 <- decadal_trends_past_futssp370[decadal_trends_past_futssp370$decade %in% c("1970s", "1990s", "2010s", "2030s", "2050s"), ]
   decadal_trends_past_futssp585 <- decadal_trends_past_futssp585[decadal_trends_past_futssp585$decade %in% c("1970s", "1990s", "2010s", "2030s", "2050s"), ]
   
-
+  # Adjust the disease to virus name for TBE (to TBEV)
+  species_virus_labeller <- as_labeller(c("Ixodes ricinus" = "Ixodes ricinus",
+                                          "TBE" = "TBEV",
+                                          "Culex pipiens" = "Culex pipiens",
+                                          "WNV" = "WNV"))
+  
   
     
 # b) Visualisation of data for scenario ssp126 ---------------------------------
@@ -600,6 +605,7 @@ for (o in operations) { # Loop over the peak and mean functions
          aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +
     facet_grid2(species ~ time, scales = "free_y",
+                labeller = labeller(species = species_virus_labeller),
                 strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                      text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
     labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
@@ -659,6 +665,7 @@ for (o in operations) { # Loop over the peak and mean functions
          aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +
     facet_grid2(species ~ time, scales = "free_y",
+                labeller = labeller(species = species_virus_labeller),
                 strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                      text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
     labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
@@ -718,6 +725,7 @@ for (o in operations) { # Loop over the peak and mean functions
          aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +
     facet_grid2(species ~ time, scales = "free_y",
+                labeller = labeller(species = species_virus_labeller),
                 strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                      text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
     labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
@@ -766,126 +774,3 @@ for (o in operations) { # Loop over the peak and mean functions
   
   
 } # Close the loop over the peak and mean functions
-
-
-
-
-
-
-#-------------------------------------------------------------------------------
-
-# Plot for poster 
-
-# Visualize the data for future environmental scenario ssp370
-# for Ixodes ricinus and TBE
-ggplot(data = decadal_trends_past_futssp370[decadal_trends_past_futssp370$species %in% c("Ixodes ricinus", "TBE"), ],
-       aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
-  geom_line(linewidth = 1.2, alpha = 0.8) +
-  facet_grid2(species ~ time, scales = "free_y",
-              strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3")),
-                                   text_y = elem_list_text(face = c("bold.italic", NA)))) +
-  labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
-  scale_color_manual(
-    values = c(
-      "1970s" = "black",
-      "1990s" = "royalblue4",
-      "2010s" = "lightblue3",
-      "2030s" = "lightcoral",
-      "2050s" = "#A52C60"
-    )
-  ) +
-  scale_linetype_manual(
-    values = c(
-      "Factual prediction" = "solid",
-      "Counterfactual climate" = "dotdash",
-      "Counterfactual land use" = "dashed",
-      "Counterfactual climate + land use" = "dotted"
-    )
-  ) +
-  theme_bw() +
-  theme(
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    text = element_text(size = 14),  
-    axis.title = element_text(size = 14),  
-    axis.text = element_text(size = 12),  
-    legend.title = element_text(size = 12.5, face = "bold"),  
-    legend.text = element_text(size = 12),  
-    plot.title = element_text(size = 16, face = "bold"),
-    strip.text = element_text(size = 16, face = "bold"), 
-    strip.background = element_rect(fill = "grey75", color = NA),
-    panel.grid.major = element_line(linewidth = 0.3, color = "gray90"),
-    panel.grid.minor = element_blank(), 
-    legend.key.height = unit(0.8, "cm"),
-    legend.key.width = unit(1.5, "cm"),
-    panel.background = element_rect(fill = "transparent", colour = NA),
-    plot.background = element_rect(fill = "transparent", colour = NA),
-    legend.background = element_rect(fill = "transparent", colour = NA),
-    legend.box.background = element_rect(fill = "transparent", colour = NA)) +
-  guides(
-    color = guide_legend(title.position = "top", nrow = 3, byrow = TRUE),  
-    linetype = guide_legend(title.position = "top", nrow = 3, byrow = TRUE) 
-  ) +
-  scale_y_continuous(labels = scales::label_number(accuracy = 0.01))
-
-
-# Save the figure
-ggsave(paste0("output_data/plots/decadal_trends_Ixodes_TBE_ssp370_poster",o,".png"), width = 9, height = 7, dpi = 400, bg = "transparent", device = grDevices::png,     # use base R's PNG function
-       type = "cairo")
-
-# Visualize the data for future environmental scenario ssp370
-# for Ixodes ricinus and TBE
-ggplot(data = decadal_trends_past_futssp370[decadal_trends_past_futssp370$species %in% c("Culex pipiens", "WNV"), ],
-       aes(x = month, y = occurrence, color = decade, linetype = scenario, group = interaction(decade, scenario))) +
-  geom_line(linewidth = 1.2, alpha = 0.8) +
-  facet_grid2(species ~ time, scales = "free_y",
-              strip = strip_themed(background_y = elem_list_rect(fill = c("lightsteelblue1", "lightsteelblue1")),
-                                   text_y = elem_list_text(face = c("bold.italic", NA)))) +
-  labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Decade", linetype = "Prediction basis") +
-  scale_color_manual(
-    values = c(
-      "1970s" = "black",
-      "1990s" = "royalblue4",
-      "2010s" = "lightblue3",
-      "2030s" = "lightcoral",
-      "2050s" = "#A52C60"
-    )
-  ) +
-  scale_linetype_manual(
-    values = c(
-      "Factual prediction" = "solid",
-      "Counterfactual climate" = "dotdash",
-      "Counterfactual land use" = "dashed",
-      "Counterfactual climate + land use" = "dotted"
-    )
-  ) +
-  theme_bw() +
-  theme(
-    legend.position = "bottom",
-    legend.box = "horizontal",
-    text = element_text(size = 14),  
-    axis.title = element_text(size = 14),  
-    axis.text = element_text(size = 12),  
-    legend.title = element_text(size = 12.5, face = "bold"),  
-    legend.text = element_text(size = 12),  
-    plot.title = element_text(size = 16, face = "bold"),
-    strip.text = element_text(size = 16, face = "bold"), 
-    strip.background = element_rect(fill = "grey75", color = NA),
-    panel.grid.major = element_line(linewidth = 0.3, color = "gray90"),
-    panel.grid.minor = element_blank(), 
-    legend.key.height = unit(0.8, "cm"),
-    legend.key.width = unit(1.5, "cm"),
-    panel.background = element_rect(fill = "transparent", colour = NA),
-    plot.background = element_rect(fill = "transparent", colour = NA),
-    legend.background = element_rect(fill = "transparent", colour = NA),
-    legend.box.background = element_rect(fill = "transparent", colour = NA)) +
-  guides(
-    color = guide_legend(title.position = "top", nrow = 3, byrow = TRUE),  
-    linetype = guide_legend(title.position = "top", nrow = 3, byrow = TRUE) 
-  ) +
-  scale_y_continuous(labels = scales::label_number(accuracy = 0.01))
-
-
-# Save the figure
-ggsave(paste0("output_data/plots/decadal_trends_Culex_WNV_ssp370_poster",o,".png"), width = 9, height = 7, dpi = 400, bg = "transparent", device = grDevices::png,     # use base R's PNG function
-       type = "cairo")

@@ -396,3 +396,210 @@ for (s in landuse_scenario) {
 
 
 
+
+#-------------------------------------------------------------------------------
+
+# 4. Prepare quantification of climate and land-use changes --------------------
+
+# Quantify the projected changes from the baseline (2010s) to the future (2050s) 
+# of different climate and land-use variables per SSP scenario
+# This is done to evaluate the implications for climate and land-use change 
+# in Europe according to the three different SSP pathways
+
+# (a) Climate - temperature and precipitation ----------------------------------
+
+# Prepare path to data folders
+datapath_Climate_data_future <- file.path("input_data/environmental_data/ISIMIP3b/Climate")
+datapath_Climate_data_baseline <- file.path("input_data/environmental_data/ISIMIP3a/Climate")
+
+# Create a vector containing the three different climate forcing scenarios
+clim_scenario <- c("ssp126", "ssp370", "ssp585")
+
+# Create a vector containing the different climate models
+clim_models <- c("gfdl-esm4", "ipsl-cm6a-lr", "mpi-esm1-2-hr", "mri-esm2-0", "ukesm1-0-ll")
+
+# Prepare a data frame to store the quantified climate changes per SSP and
+# climate variable
+climate_change_quantification <- data.frame()
+
+# Prepare baseline (2010s) 
+baseline_files <- list.files(path = paste0(datapath_Climate_data_baseline, "/processed_data/"), pattern = "201", full.names = TRUE) # List files
+baseline_stack <- terra::rast(baseline_files) # Create raster stacks
+
+baseline_stack_pr <- baseline_stack[[grep("^pr$", names(baseline_stack))]] # Precipitation stack
+baseline_stack_tas <- baseline_stack[[grep("^tas$", names(baseline_stack))]] # Mean temperature stack
+
+baseline_tas_mean <- mean(values(baseline_stack_tas), na.rm = TRUE) # Compute the long-term mean across all months in the 2010s
+
+ # Compute decadal mean annual precipitation
+years <- as.numeric(str_extract(basename(baseline_files), "\\d{4}"))
+baseline_pr_annual <- tapp(baseline_stack_pr, years, sum)
+baseline_pr_mean <- mean(values(baseline_pr_annual), na.rm = TRUE)
+
+# Prepare future (2050s)
+# Loop through the different SSP pathways and the 5 different climate models
+# Calculate the decadal temperature mean and the decadal mean annual precipitation
+# for each climate model. These model-specific decadal values are then compared
+# to a common baseline period (2010s) to compute climate change signals.
+# Finally, the resulting temperature and precipitation changes are averaged
+# across the five climate models to obtain a ensemble mean for each SSP scenario.
+
+for (s in clim_scenario) { # Start of the loop over the three different forcing scenarios
+  
+  print(s)
+  
+  tas_models <- c()
+  pr_models <- c()
+  
+  for (l in clim_models) { # Start the loop over the 5 different climate models
+    
+    print(l)
+    
+    # List files
+    future_files <- list.files(path = paste0(datapath_Climate_data_future, "/",s,"/processed_data/",l,"/"), pattern = "205", full.names = TRUE)
+    
+    # Create raster stacks
+    future_stack <- terra::rast(future_files)
+    
+    # Create different raster stacks for precipitation and mean temperature
+    future_stack_pr <- future_stack[[grep("^pr$", names(future_stack))]]
+    future_stack_tas <- future_stack[[grep("^tas$", names(future_stack))]]
+    
+    # Compute the long-term mean across all months in the 2050s
+    future_tas_mean <- mean(values(future_stack_tas), na.rm = TRUE)
+    
+    # Compute decadal mean annual precipitation
+    years <- as.numeric(str_extract(basename(future_files), "\\d{4}"))
+    future_pr_annual <- tapp(future_stack_pr, years, sum)
+    future_pr_mean <- mean(values(future_pr_annual), na.rm = TRUE)
+    
+    # Quantify projected changes from baseline to future
+    tas_change_m <- future_tas_mean - baseline_tas_mean
+    pr_change_m <- future_pr_mean - baseline_pr_mean
+    
+    # Store results per climate model
+    tas_models <- c(tas_models, tas_change_m)
+    pr_models <- c(pr_models, pr_change_m)
+    
+  } # Close loop over the 5 climate models
+  
+  # Create an ensemble over the different climate models under each SSP
+  tas_change <- mean(tas_models, na.rm = TRUE)
+  pr_change  <- mean(pr_models, na.rm = TRUE)
+  pr_change_pct <- (pr_change / baseline_pr_mean) * 100
+  
+  # Store SSP results
+  climate_change_quantification <- rbind(climate_change_quantification, 
+                                         data.frame(SSP = s, tas_change = tas_change,
+                                                    pr_change = pr_change,
+                                                    pr_change_pct = pr_change_pct))
+
+} # Close loop over the 3 SSP pathways
+
+print(climate_change_quantification)
+  
+    
+    
+    
+# (b) Land use -----------------------------------------------------------------
+
+# Prepare path to data folder
+datapath_LandUse_data_future <- file.path("input_data/environmental_data/ISIMIP3b/LandUse")
+datapath_LandUse_data_baseline <- file.path("input_data/environmental_data/ISIMIP3a/LandUse")
+
+# Create a vector containing the three different environmental forcing scenarios
+landuse_scenario <- c("ssp126", "ssp370", "ssp585")
+
+# Prepare a data frame to store the quantified land-use changes per SSP and
+# land-use variable
+landuse_change_quantification <- data.frame()
+
+# Prepare baseline (2010s)
+baseline_files <- list.files(path = paste0(datapath_LandUse_data_baseline, "/processed_data/"), pattern = "201.*\\.tif$", full.names = TRUE) # List files
+baseline_stack <- terra::rast(baseline_files) # Create raster stacks
+
+baseline_stack_primary_forest <- baseline_stack[[grep("^primary_forest$", names(baseline_stack))]] # Primary forest stack
+baseline_stack_primary_openland <- baseline_stack[[grep("^primary_openland$", names(baseline_stack))]] # Secondary open land stack
+baseline_stack_secondary_forest <- baseline_stack[[grep("^secondary_forest$", names(baseline_stack))]] # Secondary forest stack
+baseline_stack_secondary_openland <- baseline_stack[[grep("^secondary_openland$", names(baseline_stack))]] # Secondary open land stack
+baseline_stack_pasture <- baseline_stack[[grep("^pasture$", names(baseline_stack))]] # Pasture stack
+baseline_stack_rangeland <- baseline_stack[[grep("^rangeland$", names(baseline_stack))]] # Rangeland stack
+baseline_stack_cropland <- baseline_stack[[grep("^cropland$", names(baseline_stack))]] # Cropland stack
+baseline_stack_urban <- baseline_stack[[grep("^urban$", names(baseline_stack))]] # Urban stack
+
+# Compute the long-term mean across all years in the 2010s
+baseline_primary_forest_mean <- mean(values(baseline_stack_primary_forest), na.rm = TRUE)
+baseline_primary_openland_mean <- mean(values(baseline_stack_primary_openland), na.rm = TRUE)
+baseline_secondary_forest_mean <- mean(values(baseline_stack_secondary_forest), na.rm = TRUE)
+baseline_secondary_openland_mean <- mean(values(baseline_stack_secondary_openland), na.rm = TRUE)
+baseline_pasture_mean <- mean(values(baseline_stack_pasture), na.rm = TRUE)
+baseline_rangeland_mean <- mean(values(baseline_stack_rangeland), na.rm = TRUE)
+baseline_cropland_mean <- mean(values(baseline_stack_cropland), na.rm = TRUE)
+baseline_urban_mean <- mean(values(baseline_stack_urban), na.rm = TRUE)
+
+
+# Prepare future (2050s)
+# Changes in land-use composition between the baseline period (2010s) and future
+# projections (2050s), under three different SSP scenarios are quantified.
+# For each land-use category, the difference between calculated baseline values 
+# as the mean across the baseline period and future values as the mean across 
+# the 2050s are extracted, resulting in scenario-specific shift in land-use
+# fractions.
+for (s in clim_scenario) { # Start of the loop over the three different forcing scenarios
+  
+  print(s)
+  
+  # List files
+  future_files <- list.files(path = paste0(datapath_LandUse_data_future, "/",s,"/processed_data/"), pattern = "205.*\\.tif$", full.names = TRUE)
+  
+  # Create raster stacks
+  future_stack <- terra::rast(future_files)
+  
+  # Create different raster stacks for the different land-use categories
+  future_stack_primary_forest <- future_stack[[grep("^primary_forest$", names(future_stack))]] # Primary forest stack
+  future_stack_primary_openland <- future_stack[[grep("^primary_openland$", names(future_stack))]] # Secondary open land stack
+  future_stack_secondary_forest <- future_stack[[grep("^secondary_forest$", names(future_stack))]] # Secondary forest stack
+  future_stack_secondary_openland <- future_stack[[grep("^secondary_openland$", names(future_stack))]] # Secondary open land stack
+  future_stack_pasture <- future_stack[[grep("^pasture$", names(future_stack))]] # Pasture stack
+  future_stack_rangeland <- future_stack[[grep("^rangeland$", names(future_stack))]] # Rangeland stack
+  future_stack_cropland <- future_stack[[grep("^cropland$", names(future_stack))]] # Cropland stack
+  future_stack_urban <- future_stack[[grep("^urban$", names(future_stack))]] # Urban stack
+  
+  # Compute the long-term mean across all years in the 2050s
+  future_primary_forest_mean <- mean(values(future_stack_primary_forest), na.rm = TRUE)
+  future_primary_openland_mean <- mean(values(future_stack_primary_openland), na.rm = TRUE)
+  future_secondary_forest_mean <- mean(values(future_stack_secondary_forest), na.rm = TRUE)
+  future_secondary_openland_mean <- mean(values(future_stack_secondary_openland), na.rm = TRUE)
+  future_pasture_mean <- mean(values(future_stack_pasture), na.rm = TRUE)
+  future_rangeland_mean <- mean(values(future_stack_rangeland), na.rm = TRUE)
+  future_cropland_mean <- mean(values(future_stack_cropland), na.rm = TRUE)
+  future_urban_mean <- mean(values(future_stack_urban), na.rm = TRUE)
+  
+  # Quantify change from baseline period to future period
+  primary_forest_change <- future_primary_forest_mean - baseline_primary_forest_mean
+  primary_openland_change <- future_primary_openland_mean - baseline_primary_openland_mean
+  secondary_forest_change <- future_secondary_forest_mean - baseline_secondary_forest_mean
+  secondary_openland_change <- future_secondary_openland_mean - baseline_secondary_openland_mean
+  pasture_change <- future_pasture_mean - baseline_pasture_mean
+  rangeland_change <- future_rangeland_mean - baseline_rangeland_mean
+  cropland_change <- future_cropland_mean - baseline_cropland_mean
+  urban_change <- future_urban_mean - baseline_urban_mean
+  
+  # Store SSP results
+  landuse_change_quantification <- rbind(landuse_change_quantification, 
+                                         data.frame(SSP = s, 
+                                                    primary_forest_change = primary_forest_change,
+                                                    primary_openland_change = primary_openland_change,
+                                                    secondary_forest_change = secondary_forest_change,
+                                                    secondary_openland_change = secondary_openland_change,
+                                                    pasture_change = pasture_change,
+                                                    rangeland_change = rangeland_change,
+                                                    cropland_change = cropland_change,
+                                                    urban_change = urban_change))
+  
+} # Close the loop over the different SSP pathways
+  
+print(landuse_change_quantification)
+
+# save the data frame containing the results
+save(climate_change_quantification, landuse_change_quantification, file = "input_data/environmental_data/climate_landuse_change_quantification.RData")

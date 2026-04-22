@@ -108,7 +108,7 @@ maps::map.axes(cex.axis = 0.75)
 points(TBE_occ_env$lon[TBE_occ_env$occ == 0], TBE_occ_env$lat[TBE_occ_env$occ == 0], col='steelblue4',  pch=19, cex = 0.5)
 points(TBE_occ_env$lon[TBE_occ_env$occ == 1], TBE_occ_env$lat[TBE_occ_env$occ == 1], col='goldenrod',  pch=19, cex = 0.5)
 
-legend(title = "TBE:", x = -28, y = 50, legend = c("Absence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
+legend(title = "TBEV:", x = -28, y = 50, legend = c("Absence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
 
 dev.off()
 

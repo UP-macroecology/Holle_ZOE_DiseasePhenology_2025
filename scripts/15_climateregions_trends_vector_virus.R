@@ -1104,6 +1104,12 @@ for (o in operations) { # Loop over the peak and mean functions
   decadal_trends_past_futssp370 <- na.omit(decadal_trends_past_futssp370)
   decadal_trends_past_futssp585 <- na.omit(decadal_trends_past_futssp585)
   
+  # Adjust the disease to virus name for TBE (to TBEV)
+  species_virus_labeller <- as_labeller(c("Ixodes ricinus" = "Ixodes ricinus",
+                                          "TBE" = "TBEV",
+                                          "Culex pipiens" = "Culex pipiens",
+                                          "WNV" = "WNV"))
+  
   
 # b) Visualise phenology for main climate regions (past + future ssp126) -------  
   
@@ -1111,6 +1117,7 @@ for (o in operations) { # Loop over the peak and mean functions
   ggplot(decadal_trends_past_futssp126, aes(x = month, y = occ_probability, color = clim_region, linetype = scenario, group = interaction(clim_region, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +  
     facet_grid2(species ~ decade, scales = "free_y",
+                labeller = labeller(species = species_virus_labeller),
                 strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                      text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
     labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Latitudinal band", linetype = "Prediction basis") +
@@ -1157,6 +1164,7 @@ for (o in operations) { # Loop over the peak and mean functions
   ggplot(decadal_trends_past_futssp370, aes(x = month, y = occ_probability, color = clim_region, linetype = scenario, group = interaction(clim_region, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +  
     facet_grid2(species ~ decade, scales = "free_y",
+                labeller = labeller(species = species_virus_labeller),
                 strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                      text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
     labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Latitudinal band", linetype = "Prediction basis") +
@@ -1203,6 +1211,7 @@ for (o in operations) { # Loop over the peak and mean functions
   ggplot(decadal_trends_past_futssp585, aes(x = month, y = occ_probability, color = clim_region, linetype = scenario, group = interaction(clim_region, scenario))) +
     geom_line(linewidth = 1.2, alpha = 0.8) +  
     facet_grid2(species ~ decade, scales = "free_y",
+                labeller = labeller(species = species_virus_labeller),
                 strip = strip_themed(background_y = elem_list_rect(fill = c("steelblue3", "steelblue3", "lightsteelblue1", "lightsteelblue1")),
                                      text_y = elem_list_text(face = c("bold.italic", NA, "bold.italic", NA)))) +
     labs(x = "Month in a year", y = paste(o, "vector/virus suitability"), color = "Latitudinal band", linetype = "Prediction basis") +

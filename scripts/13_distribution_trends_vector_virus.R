@@ -611,6 +611,10 @@ distribution_trends_virus_ssp585_may_october$combination <- factor(distribution_
 # the maxTSS threshold for the target month within the target decade);
 # for three different decades
 
+new_label <- as_labeller(c(
+  "Ixodes ricinus & TBE - May" = "Ixodes ricinus & TBEV - May",
+  "Culex pipiens & WNV - July" = "Culex pipiens & WNV - July")) # Adjust label
+
 # b) Visualise historical and future distribution based on ssp126 --------------
 # May for Ixodes ricinus and TBE + July for Culex pipiens and WNV
 
@@ -626,6 +630,7 @@ ggplot() +
   scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
                        limits = c(0, 1)) +
   facet_grid2(time ~ combination,
+              labeller = labeller(combination = new_label),
               strip = strip_themed(background_x = elem_list_rect(fill = c("steelblue3", "lightsteelblue1")),
                                    text_x = elem_list_text(face = c("bold.italic", "bold.italic")))) +
   theme_bw() +
@@ -662,6 +667,7 @@ ggplot() +
   scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
                        limits = c(0, 1)) +
   facet_grid2(time ~ combination,
+              labeller = labeller(combination = new_label),
               strip = strip_themed(background_x = elem_list_rect(fill = c("steelblue3", "lightsteelblue1")),
                                    text_x = elem_list_text(face = c("bold.italic", "bold.italic")))) +
   theme_bw() +
@@ -698,6 +704,7 @@ ggplot() +
   scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
                        limits = c(0, 1)) +
   facet_grid2(time ~ combination,
+              labeller = labeller(combination = new_label),
               strip = strip_themed(background_x = elem_list_rect(fill = c("steelblue3", "lightsteelblue1")),
                                    text_x = elem_list_text(face = c("bold.italic", "bold.italic")))) +
   theme_bw() +
@@ -722,6 +729,7 @@ ggsave("output_data/plots/distribution_trends/distribution_trends_Ixodes_TBE_Cul
 
 # e) Visualise historical and future distribution based on ssp126 --------------
 # May for Ixodes ricinus and TBE + October for Ixodes ricinus and TBE
+
 
 ggplot() +
   geom_tile(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
@@ -760,6 +768,10 @@ ggsave("output_data/plots/distribution_trends/distribution_trends_Ixodes_TBE_ssp
 # f) Visualise historical and future distribution based on ssp370 --------------
 # May for Ixodes ricinus and TBE + October for Ixodes ricinus and TBE
 
+new_label <- as_labeller(c(
+  "Ixodes ricinus & TBE - May" = "Ixodes ricinus & TBEV - May",
+  "Ixodes ricinus & TBE - October" = "Ixodes ricinus & TBEV - October")) # Adjust label
+
 ggplot() +
   geom_tile(data = eu_eea_mask_df, aes(x = x, y = y), fill = "skyblue3", alpha = 0.3) +
   new_scale_fill() +
@@ -772,6 +784,7 @@ ggplot() +
   scale_fill_viridis_c(option = "plasma", name = "Virus suitability",
                        limits = c(0, 1)) +
   facet_grid2(time ~ combination,
+              labeller = labeller(combination = new_label),
               strip = strip_themed(background_x = elem_list_rect(fill = c("steelblue3", "steelblue3")),
                                    text_x = elem_list_text(face = c("bold.italic", "bold.italic")))) +
   theme_bw() +

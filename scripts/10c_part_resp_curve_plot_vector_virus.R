@@ -71,7 +71,9 @@ ggplot(data = response_data, aes(x = environmental_values, y = predicted_values,
   ylim(0,1) +
   theme_bw() +
   scale_color_manual(values = c("Ixodes ricinus" = "springgreen4", "Culex pipiens" = "royalblue4",
-                                "TBE" = "darkseagreen3", "WNV" = "lightsteelblue3")) +
+                                "TBE" = "darkseagreen3", "WNV" = "lightsteelblue3"),
+                     labels = c("Ixodes ricinus", "TBEV", "Culex pipiens", "WNV")) +
+  
   theme(legend.position = "bottom",
         legend.text = element_text(size = 6.5),
         legend.title = element_text(size = 7.5),
