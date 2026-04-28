@@ -11,13 +11,11 @@ Valén Holle<sup>1</sup>, Raphaëlle Klitting<sup>2</sup>, Nadja Kabisch<sup>3</
 ### ABSTRACT:
 Environmental changes are reshaping the distribution and seasonal dynamics of vector-borne diseases, with important implications for public health. Tick-borne encephalitis virus (TBEV) and West Nile virus (WNV) cause growing concern in Europe, with rising case numbers and ever-expanding circulation areas. The transmission risk of TBEV and WNV follows characteristic seasonal patterns, driven largely by weather-dependent activity of their arthropod vectors. The relative roles of climate and land-use change on the seasonal dynamics and spread of these diseases and their vectors remain, however, poorly quantified. Here, we assess how the spread and phenology of TBEV and WNV respond to changing climate and land-use conditions across Europe. We developed spatiotemporal species distribution models (SDMs) for the viruses and their primary vector species, generating monthly environmental suitability predictions under past and projected future conditions. Virus models incorporated vector suitability as a nested predictor to capture the dependence of virus occurrence on vector presence. To disentangle drivers of observed changes, we applied counterfactual historical simulations, attributing shifts in seasonal transmission risk to climate or land-use changes.  Historical attribution results show that land-use changes mainly affected vector suitability, whereas climatic changes drove shifts in seasonal transmission risk. Transmission risk is projected to rise continent-wide for both TBEV and WNV over the coming decades. Further, TBEV is projected to undergo pronounced phenological shifts, with a dominant spring peak and a delayed autumn peak extending into October. Prolonged seasonal transmission windows are projected to create hotspots that both intensify and expand across large regions. Taken together, our findings underscore the need for coordinated transnational efforts to manage the projected health burden of TBEV and WNV across Europe, and support upstream prevention by providing climate-informed guidance on intervention timing and spatial prioritisation.
 
-# Keywords: Climate change, Detection and attribution, Europe, Land-use change, Disease phenology, Species distribution models (SDMs), Tick-borne encephalitis virus (TBEV), Seasonality, Vector-borne diseases, West Nile virus (WNV)
-
-This repository contains the R scripts needed to reproduce all results and plots.
-
+Keywords: Climate change, Detection and attribution, Europe, Land-use change, Disease phenology, Species distribution models (SDMs), Tick-borne encephalitis virus (TBEV), Seasonality, Vector-borne diseases, West Nile virus (WNV)
 
 Funding: This work was supported by the European Union through the project Zoonosis Emergence across Degraded and Restored Forest Ecosystems (project no. 101135094).
 
+This repository contains the R scripts needed to reproduce all results and plots.
 
 ---------------------------------------------------------------
 **Workflow**
