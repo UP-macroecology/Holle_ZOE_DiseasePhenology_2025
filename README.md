@@ -21,7 +21,7 @@ This repository contains the R scripts needed to reproduce all results and plots
 **Workflow**
 ---------------------------------------------------------------
 
-All data preparation and modelling steps are detailed in the [ODMAP protocol].
+**All data preparation and modelling steps are detailed in the [ODMAP protocol](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/blob/main/ODMAP_protocol.docx).**
 
 ### 00 - Setup
 scripts [folder setup](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/blob/main/scripts/00_folder_setup.R) and [functions](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/blob/main/scripts/00_functions.R)
