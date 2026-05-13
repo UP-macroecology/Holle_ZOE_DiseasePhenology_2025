@@ -8,7 +8,6 @@
 /miscellaneous
 /writing
 .pdf
-.db
-~$pendix_Disease_Phenology.docx
-~$sease_Phenology_Draft.docx
+Thumbs.db
+~$*.docx
 
