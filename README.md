@@ -8,7 +8,7 @@ Valén Holle<sup>1</sup>, Raphaëlle Klitting<sup>2</sup>, Nadja Kabisch<sup>3</
 
 
 
-### ABSTRACT:
+## Abstract
 Environmental changes are reshaping the distribution and seasonal dynamics of vector-borne diseases, with important implications for public health. Tick-borne encephalitis virus (TBEV) and West Nile virus (WNV) cause growing concern in Europe, with rising case numbers and ever-expanding circulation areas. The transmission risk of TBEV and WNV follows characteristic seasonal patterns, driven largely by weather-dependent activity of their arthropod vectors. The relative roles of climate and land-use change on the seasonal dynamics and spread of these diseases and their vectors remain, however, poorly quantified. Here, we assess the spread and phenology of TBEV and WNV in response to historical and future climate and land-use changes across Europe. We developed spatiotemporal species distribution models (SDMs) for the viruses and their primary vector species, generating monthly environmental suitability predictions from the 1970s to 2050s. Virus models incorporated vector suitability as a nested predictor to capture the dependence of virus occurrence on vector presence. To disentangle drivers of observed changes, we applied counterfactual historical simulations, attributing shifts in seasonal transmission risk to climate or land-use changes.  Historical attribution results show that land-use changes mainly affected vector suitability, whereas climatic changes drove shifts in seasonal transmission risk. Transmission risk is projected to rise continent-wide for both TBEV and WNV over the coming decades. Further, TBEV is projected to undergo pronounced phenological shifts, with a dominant spring peak and a delayed autumn peak extending into October. Prolonged seasonal transmission windows are projected to create hotspots that both intensify and expand across large regions. Taken together, our findings underscore the need for coordinated transnational efforts to manage the projected health burden of TBEV and WNV across Europe, and support upstream prevention by providing climate-informed guidance on intervention timing and spatial prioritisation.
 
 **Keywords:** Climate change, Detection and attribution, Europe, Land-use change, Disease phenology, Species distribution models (SDMs), Tick-borne encephalitis virus (TBEV), Seasonality, Vector-borne diseases, West Nile virus (WNV)
@@ -17,9 +17,7 @@ Environmental changes are reshaping the distribution and seasonal dynamics of ve
 
 
 
----------------------------------------------------------------
-**Notes on reproducing the workflow**
----------------------------------------------------------------
+## Notes on reproducing the workflow
 
 To reproduce all analyses and final outputs, this repository contains the input datasets required to run the models in the folder [**model_input_datasets**](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/tree/main/model_input_datasets) (presence data and generated absence/background data matched with environmental predictor data, with geographical coordinates anonymised), together with the required code. These datasets should be placed into the folder **output_data/data** prior to running the analysis. For the main vector models, the corresponding input dataset should be loaded in scripts [04a_Ixodes_ricinus_models](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/blob/main/scripts/04a_Ixodes_ricinus_models.R) and [04b_Culex_pipiens_models](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/blob/main/scripts/04b_Culex_pipiens_models.R). For the virus models, the corresponding input datasets should be loaded in scripts [09a_TBE_models](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/blob/main/scripts/09a_TBE_models.R) and [09b_WNV_models](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/blob/main/scripts/09b_WNV_models.R) (starting both scripts from code line 120). As these data are provided, repeating codes from data preparation and absence/background generation scripts can be skipped (01a, 01b, 03a, 03b, 07a, 07b, 08a, 08b).
 
@@ -27,9 +25,7 @@ The codes were implemented by Valén Holle and Damaris Zurell.
 
 
 
----------------------------------------------------------------
-**Workflow**
----------------------------------------------------------------
+## Workflow
 
 **All data preparation and modelling steps are detailed in the [ODMAP protocol](https://github.com/UP-macroecology/Holle_ZOE_DiseasePhenology_2025/blob/main/ODMAP_protocol.docx).**
 
@@ -135,9 +131,7 @@ We calculate and visualise temporal trends in the duration of vector activity an
 
 
 
----------------------------------------------------------------
-**Required folder structure**
----------------------------------------------------------------
+## Required folder structure
 
 ```
 
@@ -246,9 +240,7 @@ output_data
 ```
 
 
----------------------------------------------------------------
-**Required data**
----------------------------------------------------------------
+## Required data
 
 * Vector species occurrence data are available from [GBIF](https://www.gbif.org) and [VectorMap](https://experience.arcgis.com/experience/5f95c3edfbea4634b8347fec0bd1dcd6)
 * Limited human TBE and WNV case infection data are available from [TESSy/ECDC](https://atlas.ecdc.europa.eu/public/index.aspx); comprehensive data are available upon request (subject to non-redistribution conditions)
@@ -259,9 +251,8 @@ output_data
 
 
 
----------------------------------------------------------------
-**Operating system info**
----------------------------------------------------------------
+## Operating system info
+
 
 * R version 4.3.1 (2023-06-16 ucrt)
 * Platform: x86_64-w64-mingw32/x64 (64-bit)
