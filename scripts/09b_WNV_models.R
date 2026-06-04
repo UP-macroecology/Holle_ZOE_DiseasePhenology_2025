@@ -91,7 +91,6 @@ WNV_occ_env <- WNV_occ_env_subset
 
 
 
-
 #-------------------------------------------------------------------------------
 
 # 2. Visualise thinned presences and absences ----------------------------------
@@ -115,7 +114,6 @@ points(WNV_occ_env$lon[WNV_occ_env$occ == 1], WNV_occ_env$lat[WNV_occ_env$occ ==
 legend(title = "WNV:", x = -28, y = 50, legend = c("Absence", "Presence"), col = c("steelblue4", "goldenrod"), pch = 19, pt.cex = 1, bty = "n")
 
 dev.off()
-
 
 
 
